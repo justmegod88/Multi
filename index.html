@@ -21,29 +21,29 @@
     html,body{margin:0;padding:0;background:linear-gradient(180deg,#eef4fb 0%,#f7f9fc 58%,#f3f6fb 100%);color:var(--text);
       font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Segoe UI",Arial,sans-serif;}
     body{min-height:100vh}
-    .wrap{width:min(100%,980px);margin:0 auto;padding:16px 12px 34px}
-    .hero{background:#fff;border:1.5px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
-    .brand{background:linear-gradient(180deg,#082f80 0%,#062a72 100%);color:#fff;text-align:center;padding:15px 16px;font-weight:900;font-size:19px;letter-spacing:-.03em}
-    .heroBody{padding:18px 18px 20px;text-align:center}
+    .wrap{width:min(100%,980px);margin:0 auto;padding:12px 10px 28px}
+    .hero{background:#fff;border:1.5px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:0px}
+    .brand{background:linear-gradient(180deg,#082f80 0%,#062a72 100%);color:#fff;text-align:center;padding:12px 14px;font-weight:900;font-size:18px;letter-spacing:-.03em}
+    .heroBody{padding:12px 14px 14px;text-align:center}
     .title{margin:0 0 8px;font-size:26px;line-height:1.1;font-weight:900;letter-spacing:-.04em;color:#213d63}
-    .subtitle{margin:0;color:#6d7e95;font-size:14px;line-height:1.45;font-weight:800;letter-spacing:-.02em}
-    .cards{display:flex;flex-direction:column;gap:14px}
-    .simCard{background:#fff;border:1.5px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden}
-    .simHead{padding:16px 17px 12px;border-bottom:1px solid #edf2f8;background:linear-gradient(180deg,#ffffff 0%,#f7faff 100%)}
-    .labelRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
-    .chip{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;font-size:13px;font-weight:900;letter-spacing:-.02em;border:1px solid #dbe6f4;background:#f2f7ff;color:#0f5aa6;white-space:nowrap}
-    .dot{width:9px;height:9px;border-radius:50%;background:#0f61b4;display:inline-block}
+    .subtitle{margin:0;color:#6d7e95;font-size:14px;line-height:1.155;font-weight:800;letter-spacing:-.02em}
+    .cards{display:flex;flex-direction:column;gap:10px}
+    .simCard{background:#fff;border:1.5px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+    .simHead{padding:10px 14px 8px;border-bottom:1px solid #edf2f8;background:linear-gradient(180deg,#ffffff 0%,#f7faff 100%)}
+    .labelRow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:0px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:-.02em;border:1px solid #dbe6f4;background:#f2f7ff;color:#0f5aa6;white-space:nowrap}
+    .dot{width:8px;height:8px;border-radius:50%;background:#0f61b4;display:inline-block}
     .simCard.best .chip{background:#eaf7f1;color:#127149;border-color:#cfeede}
     .simCard.best .dot{background:#22a06b}
     .simCard.warn .chip{background:#fff6e8;color:#a55b00;border-color:#f2dfbd}
     .simCard.warn .dot{background:#f5a623}
     .simCard.info .chip{background:#eef6ff;color:#0f5aa6;border-color:#cfe3ff}
-    .simText{margin:0;font-size:17px;line-height:1.5;font-weight:900;letter-spacing:-.035em;color:#234767}
-    .simText small{display:block;margin-top:5px;font-size:12px;line-height:1.45;font-weight:800;color:#73839a;letter-spacing:-.02em}
-    .camBtn{width:58px;height:50px;border-radius:18px;border:1.5px solid #d9e2ee;background:#fff;color:#234767;box-shadow:var(--soft);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
-    .camBtn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+    .simText{margin:0;font-size:15px;line-height:1.28;font-weight:900;letter-spacing:-.035em;color:#234767}
+    .simText small{display:block;margin-top:5px;font-size:12px;line-height:1.155;font-weight:800;color:#73839a;letter-spacing:-.02em}
+    .camBtn{width:56px;height:46px;border-radius:16px;border:1.5px solid #d9e2ee;background:#fff;color:#234767;box-shadow:var(--soft);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+    .camBtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
     .camBtn.on{background:linear-gradient(180deg,#156bc4 0%,#0f61b4 100%);border-color:#0f61b4;color:#fff}
-    .media{position:relative;width:100%;aspect-ratio:1.42/1;background:#000;overflow:hidden}
+    .media{position:relative;width:100%;aspect-ratio:2.13/1;background:#000;overflow:hidden}
     .media img,.media video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
     .media video{display:none;transform:scaleX(-1)}
     .media.camera video{display:block}
@@ -51,35 +51,40 @@
     .effectLayer{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .18s ease}
     .media.best::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 52%,rgba(255,255,255,.06),rgba(255,255,255,0) 58%)}
     .media.warn .effectLayer{opacity:1;background:
-      radial-gradient(ellipse 34% 24% at 50% 78%,rgba(255,255,255,.34) 0%,rgba(255,255,255,.22) 48%,rgba(255,255,255,0) 76%),
-      linear-gradient(to bottom,rgba(255,255,255,0) 0 62%,rgba(255,255,255,.10) 100%);
-      backdrop-filter:blur(2.5px);-webkit-backdrop-filter:blur(2.5px);
-      mask-image:radial-gradient(ellipse 30% 25% at 50% 78%,#000 0 72%,transparent 100%);
-      -webkit-mask-image:radial-gradient(ellipse 30% 25% at 50% 78%,#000 0 72%,transparent 100%);}
+      radial-gradient(circle at 50% 50%,rgba(255,255,255,0) 0 40%,rgba(255,255,255,.18) 62%,rgba(255,255,255,.34) 100%),
+      radial-gradient(ellipse 42% 28% at 50% 82%,rgba(255,255,255,.38) 0%,rgba(255,255,255,.22) 52%,rgba(255,255,255,0) 78%);
+      backdrop-filter:blur(3.2px);-webkit-backdrop-filter:blur(3.2px);
+      mask-image:
+        radial-gradient(circle at 50% 50%,transparent 0 44%,#000 64% 100%),
+        radial-gradient(ellipse 40% 28% at 50% 82%,#000 0 74%,transparent 100%);
+      -webkit-mask-image:
+        radial-gradient(circle at 50% 50%,transparent 0 44%,#000 64% 100%),
+        radial-gradient(ellipse 40% 28% at 50% 82%,#000 0 74%,transparent 100%);}
     .media.info .effectLayer{opacity:1;background:
-      radial-gradient(circle at 50% 50%,rgba(255,255,255,0) 0 48%,rgba(255,255,255,.10) 62%,rgba(255,255,255,.25) 88%);
-      backdrop-filter:blur(3.5px);-webkit-backdrop-filter:blur(3.5px);
-      mask-image:radial-gradient(circle at 50% 50%,transparent 0 52%,#000 72% 100%);
-      -webkit-mask-image:radial-gradient(circle at 50% 50%,transparent 0 52%,#000 72% 100%);}
+      linear-gradient(to bottom,rgba(255,255,255,.30) 0%,rgba(255,255,255,.22) 46%,rgba(255,255,255,.04) 74%,rgba(255,255,255,0) 100%),
+      radial-gradient(ellipse 70% 38% at 50% 28%,rgba(255,255,255,.22) 0%,rgba(255,255,255,.10) 58%,rgba(255,255,255,0) 100%);
+      backdrop-filter:blur(3.4px);-webkit-backdrop-filter:blur(3.4px);
+      mask-image:linear-gradient(to bottom,#000 0 58%,rgba(0,0,0,.70) 70%,transparent 100%);
+      -webkit-mask-image:linear-gradient(to bottom,#000 0 58%,rgba(0,0,0,.70) 70%,transparent 100%);}
     .status{position:absolute;left:12px;bottom:12px;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.90);color:#234767;font-size:11px;font-weight:900;box-shadow:0 8px 18px rgba(0,0,0,.12);display:none}
     .media.camera .status{display:block}
-    .foot{margin-top:14px;background:#fff;border:1.5px solid var(--line);border-radius:24px;box-shadow:var(--soft);padding:14px 16px 16px}
+    .foot{margin-top:10px;background:#fff;border:1.5px solid var(--line);border-radius:22px;box-shadow:var(--soft);padding:12px 14px 14px}
     .foot h3{margin:0 0 8px;font-size:14px;color:#213d63;font-weight:900}
     .refs{white-space:pre-line;margin:0;color:#8a96a8;font-size:10px;line-height:1.55;font-weight:700;letter-spacing:-.01em}
     .kr{text-align:center;margin-top:12px;color:#6d7e95;font-size:12px;font-weight:900;letter-spacing:-.02em}
     @media (max-width:720px){
-      .wrap{padding:12px 10px 28px}
-      .brand{font-size:16px;padding:13px 14px}
-      .heroBody{padding:16px 14px 18px}
+      .wrap{padding:10px 9px 24px}
+      .brand{font-size:16px;padding:11px 12px}
+      .heroBody{padding:11px 12px 12px}
       .title{font-size:24px}
       .subtitle{font-size:13px}
       .simCard{border-radius:24px}
-      .simHead{padding:14px 14px 11px}
-      .simText{font-size:15px;line-height:1.48}
+      .simHead{padding:9px 12px 7px}
+      .simText{font-size:14px;line-height:1.25}
       .simText small{font-size:11px}
-      .chip{font-size:12px;padding:6px 10px}
-      .camBtn{width:54px;height:48px;border-radius:16px}
-      .media{aspect-ratio:1.18/1}
+      .chip{font-size:12px;padding:5px 9px}
+      .camBtn{width:52px;height:44px;border-radius:15px}
+      .media{aspect-ratio:1.78/1}
       .refs{font-size:9px}
     }
   </style>
@@ -161,7 +166,6 @@
 
   <script>
     let stream = null;
-    let activeCard = null;
 
     async function ensureCamera(){
       if(stream) return stream;
@@ -172,16 +176,12 @@
       return stream;
     }
 
-    function resetCards(){
-      document.querySelectorAll('.simCard').forEach(card => {
-        const video = card.querySelector('video');
-        const media = card.querySelector('.media');
-        const btn = card.querySelector('.camBtn');
-        media.classList.remove('camera');
-        btn.classList.remove('on');
-        if(video) video.srcObject = null;
-      });
-      activeCard = null;
+    function stopCameraIfUnused(){
+      const hasActiveCamera = document.querySelector('.media.camera');
+      if(!hasActiveCamera && stream){
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
     }
 
     document.querySelectorAll('.simCard').forEach(card => {
@@ -190,18 +190,22 @@
       const media = card.querySelector('.media');
 
       btn.addEventListener('click', async () => {
-        if(activeCard === card){
-          resetCards();
+        const isOn = media.classList.contains('camera');
+
+        if(isOn){
+          media.classList.remove('camera');
+          btn.classList.remove('on');
+          if(video) video.srcObject = null;
+          stopCameraIfUnused();
           return;
         }
 
         try{
           const cam = await ensureCamera();
-          resetCards();
           video.srcObject = cam;
+          await video.play().catch(() => {});
           media.classList.add('camera');
           btn.classList.add('on');
-          activeCard = card;
         }catch(err){
           alert('카메라 권한을 허용하면 해당 영역에서 실시간 시뮬레이션을 확인할 수 있습니다.');
           console.error(err);
