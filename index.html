@@ -271,7 +271,7 @@
       document.body.classList.remove('distance-near','distance-far');
       document.body.classList.add(mode === 'near' ? 'distance-near' : 'distance-far');
 
-      text.textContent = mode === 'near' ? '근거리 모드' : '원거리 모드';
+      text.textContent = mode === 'near' ? '📖 근거리 모드' : '🏞️ 원거리 모드';
     }
 
     function hideDistanceMode(){
@@ -281,65 +281,112 @@
     }
 
     function analyzeDistanceFromVideo(video){
-      const w = 56, h = 42;
+      const w = 80, h = 60;
       detectCanvas.width = w;
       detectCanvas.height = h;
       detectCtx.drawImage(video, 0, 0, w, h);
       const data = detectCtx.getImageData(0, 0, w, h).data;
 
-      let r=0, g=0, b=0, bright=0;
-      let edge=0;
-      let count = w*h;
+      function lumAt(x,y){
+        const i = (y*w+x)*4;
+        return data[i]*0.299 + data[i+1]*0.587 + data[i+2]*0.114;
+      }
 
-      for(let y=0; y<h; y++){
-        for(let x=0; x<w; x++){
+      let totalEdge = 0, centerEdge = 0, outerEdge = 0;
+      let centerPixels = 0, outerPixels = 0;
+      let skyBlue = 0, greenish = 0, bright = 0, lowTexture = 0;
+
+      const cx1 = Math.floor(w*0.22), cx2 = Math.floor(w*0.78);
+      const cy1 = Math.floor(h*0.18), cy2 = Math.floor(h*0.82);
+
+      for(let y=1; y<h; y++){
+        for(let x=1; x<w; x++){
           const i = (y*w+x)*4;
-          const rr=data[i], gg=data[i+1], bb=data[i+2];
-          r += rr; g += gg; b += bb;
-          const lum = rr*0.299 + gg*0.587 + bb*0.114;
+          const r = data[i], g = data[i+1], b = data[i+2];
+          const lum = r*0.299 + g*0.587 + b*0.114;
           bright += lum;
 
-          if(x>0){
-            const j = (y*w+x-1)*4;
-            const lum2 = data[j]*0.299 + data[j+1]*0.587 + data[j+2]*0.114;
-            edge += Math.abs(lum-lum2);
+          const e = Math.abs(lum-lumAt(x-1,y)) + Math.abs(lum-lumAt(x,y-1));
+          totalEdge += e;
+          if(e < 8) lowTexture++;
+
+          const isCenter = x>=cx1 && x<=cx2 && y>=cy1 && y<=cy2;
+          if(isCenter){
+            centerEdge += e;
+            centerPixels++;
+          }else{
+            outerEdge += e;
+            outerPixels++;
           }
-          if(y>0){
-            const j = ((y-1)*w+x)*4;
-            const lum2 = data[j]*0.299 + data[j+1]*0.587 + data[j+2]*0.114;
-            edge += Math.abs(lum-lum2);
-          }
+
+          if(b > r*1.15 && b > g*1.03 && lum > 90) skyBlue++;
+          if(g > r*1.12 && g > b*0.82 && lum > 65) greenish++;
         }
       }
 
-      r/=count; g/=count; b/=count; bright/=count;
-      edge /= (count*2);
+      const pixels = (w-1)*(h-1);
+      const avgEdge = totalEdge / pixels;
+      const cEdge = centerEdge / Math.max(1, centerPixels);
+      const oEdge = outerEdge / Math.max(1, outerPixels);
+      const centerDominance = cEdge / Math.max(1, oEdge);
+      const skyRatio = skyBlue / pixels;
+      const greenRatio = greenish / pixels;
+      const smoothRatio = lowTexture / pixels;
+      const avgBright = bright / pixels;
 
-      // 아주 단순한 거리 추정:
-      // 벽/하늘/풍경처럼 면이 크고 단순하거나 파랑·초록 비율이 높으면 원거리,
-      // 질감·경계가 많고 물체가 가까이 보이면 근거리로 표시.
-      const skyOrLandscape = (b > r*1.12 && b > g*1.02) || (g > r*1.12 && g > b*.72);
-      const smoothScene = edge < 11.5;
-      const closeObjectLike = edge > 17.5 && bright < 205;
+      let nearScore = 0;
+      let farScore = 0;
 
-      if(skyOrLandscape || smoothScene) return 'far';
-      if(closeObjectLike) return 'near';
-      return 'far';
+      // 근거리: 중앙에 가까운 물체가 크게 들어와 경계/질감이 중앙에 몰리는 경우
+      if(centerDominance > 1.18) nearScore += 2.4;
+      if(centerDominance > 1.35) nearScore += 1.4;
+      if(avgEdge > 18) nearScore += 1.5;
+      if(avgEdge > 24) nearScore += 1.2;
+      if(smoothRatio < 0.34) nearScore += 1.0;
+      if(avgBright < 70) nearScore += 0.5;
+
+      // 원거리: 벽/풍경/하늘처럼 큰 면적이 단순하거나 하늘·초록 비율이 높은 경우
+      if(skyRatio > 0.18) farScore += 3.0;
+      if(greenRatio > 0.26 && avgEdge < 22) farScore += 1.6;
+      if(smoothRatio > 0.48) farScore += 2.1;
+      if(avgEdge < 14) farScore += 1.6;
+      if(centerDominance < 1.05) farScore += 1.1;
+      if(avgBright > 145 && smoothRatio > 0.40) farScore += 0.8;
+
+      return nearScore > farScore + 0.8 ? 'near' : 'far';
     }
 
     function startDistanceDetection(){
       if(detectTimer) return;
+      let pendingMode = null;
+      let pendingCount = 0;
+      let currentMode = null;
+
       detectTimer = setInterval(() => {
         const videos = getActiveVideos();
         if(!videos.length){
           hideDistanceMode();
+          pendingMode = null;
+          pendingCount = 0;
+          currentMode = null;
           return;
         }
         try{
           const mode = analyzeDistanceFromVideo(videos[0]);
-          setDistanceMode(mode);
+
+          if(mode === pendingMode){
+            pendingCount++;
+          }else{
+            pendingMode = mode;
+            pendingCount = 1;
+          }
+
+          if((mode !== currentMode && pendingCount >= 3) || !currentMode){
+            currentMode = mode;
+            setDistanceMode(mode);
+          }
         }catch(e){}
-      }, 700);
+      }, 500);
     }
 
     function stopCameraIfUnused(){
