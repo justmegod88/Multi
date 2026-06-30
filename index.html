@@ -4,34 +4,975 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <title>ACUVUE 183 Pupil Optical Zone Demo</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
 <style>
-:root{--blue:#005EB8;--deep:#063487;--text:#15304b;--sub:#64778d;--line:#dbe5f1;--bg:#eef4fb;--shadow:0 14px 34px rgba(20,52,90,.10);--green:#22bf62;--orange:#ff8a2a}*{box-sizing:border-box}html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Segoe UI",Arial,sans-serif}.topbar{height:52px;background:linear-gradient(180deg,#073a91 0%,#063487 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:950;letter-spacing:-.03em;position:sticky;top:0;z-index:50;box-shadow:0 6px 18px rgba(5,43,112,.18)}.backBtn{position:absolute;right:12px;top:50%;transform:translateY(-50%);border:1.4px solid rgba(255,255,255,.58);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;height:34px;padding:0 12px;font-size:13px;font-weight:900}.wrap{width:min(100%,1120px);margin:0 auto;padding:14px 12px 26px}.stepHeader{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}.stepCard{background:#fff;border:1.5px solid var(--line);border-radius:16px;min-height:68px;padding:11px 12px;display:flex;flex-direction:column;justify-content:center;align-items:center;box-shadow:0 10px 24px rgba(20,52,90,.06)}.stepCard.active{border-color:#9bc5f4;background:#f3f8ff}.stepCard b{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#dfe6ef;color:#6d7d91;margin-right:5px;font-size:13px}.stepCard.active b{background:var(--blue);color:#fff}.stepTitle{font-size:14px;font-weight:950;color:#263e5a}.stepCard.active .stepTitle{color:var(--blue)}.stepDesc{margin-top:5px;font-size:11px;font-weight:800;color:#6d7d91;text-align:center}.panel{background:#fff;border:1.5px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px}.capturePanel{display:grid;grid-template-columns:1fr 270px}.panelHead{padding:14px 16px 10px}.panelTitle{margin:0;display:flex;align-items:center;gap:8px;font-size:19px;line-height:1.25;font-weight:950;letter-spacing:-.035em}.blueDot{width:13px;height:13px;border-radius:50%;background:var(--blue);display:inline-block;flex:0 0 13px}.panelDesc{margin:6px 0 0;color:var(--sub);font-size:13px;line-height:1.45;font-weight:800}.cameraSide{padding:0 14px 14px}.cameraFrame{position:relative;width:100%;aspect-ratio:1.55/1;min-height:260px;max-height:390px;border-radius:16px;overflow:hidden;background:#111b2a}#video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}#liveCanvas,#captureCanvas{position:absolute;inset:0;width:100%;height:100%}#liveCanvas{z-index:4;pointer-events:none}#captureCanvas{display:none;z-index:2}.cameraFrame.captured #video{display:none}.cameraFrame.captured #liveCanvas{display:none}.cameraFrame.captured #captureCanvas{display:block}.camBadge{position:absolute;left:13px;top:13px;z-index:8;display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.92);color:#1d3854;font-size:12px;font-weight:950}.camBadge i{width:10px;height:10px;border-radius:50%;background:#e34545;display:block}.faceGuide{position:absolute;left:50%;top:50%;width:82%;height:60%;transform:translate(-50%,-50%);border:4px solid rgba(255,255,255,.9);border-radius:50% / 44%;z-index:3;pointer-events:none;box-shadow:0 0 0 999px rgba(0,0,0,.14)}.faceGuide:before{content:"";position:absolute;left:50%;top:-8%;height:116%;border-left:1.4px dashed rgba(255,255,255,.65)}.faceGuide:after{content:"";position:absolute;left:-8%;top:50%;width:116%;border-top:1.4px dashed rgba(255,255,255,.65)}.guideText{position:absolute;left:28px;right:28px;bottom:14px;z-index:9;background:rgba(0,0,0,.55);color:#fff;border-radius:14px;padding:11px 12px;text-align:center;font-size:14px;font-weight:950;line-height:1.4}.guideText small{display:block;margin-top:3px;font-size:12px;font-weight:800;opacity:.92}.timerSide{border-left:1.5px solid #e5edf6;padding:14px 18px;display:flex;flex-direction:column;justify-content:center}.timerTitle{display:flex;align-items:center;gap:8px;color:var(--blue);font-size:17px;font-weight:950;letter-spacing:-.03em;margin-bottom:8px}.timerText{color:#667a91;font-size:13px;line-height:1.45;font-weight:800;min-height:38px}.ring{margin:12px auto 18px;width:150px;height:150px;border-radius:50%;background:conic-gradient(var(--blue) var(--progress,0deg),#edf1f6 0deg);display:grid;place-items:center}.ringInner{width:112px;height:112px;border-radius:50%;background:#fff;display:grid;place-items:center;color:#004fa9;font-size:48px;font-weight:950;box-shadow:inset 0 0 0 1px #edf2f8}.retryBtn{width:100%;height:42px;border:none;border-radius:10px;background:#f0f2f5;color:#41617f;font-weight:950}.resultPanel{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;padding:0 14px 14px}.resultImage{position:relative;width:100%;aspect-ratio:1.75/1;border-radius:16px;overflow:hidden;background:#e7edf5}#resultCanvas{width:100%;height:100%;display:block}.measureStack{display:flex;flex-direction:column;gap:10px}.measureCard{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:13px;display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:10px;min-height:74px;box-shadow:0 10px 24px rgba(20,52,90,.06)}.measureIcon{width:38px;height:38px;border-radius:50%}.measureIcon.iris{border:3px dashed var(--blue)}.measureIcon.pupil{border:3px solid #111}.measureName{font-size:13px;font-weight:950;color:#263e5a}.measureValue{font-size:26px;font-weight:950;color:#004fa9;white-space:nowrap}.measureValue.black{color:#111}.notice{background:#eaf4ff;color:#245e9b;border-radius:13px;padding:11px 13px;font-size:12px;line-height:1.45;font-weight:900}.simGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 14px 16px}.simCard{border:1.5px solid var(--line);border-radius:17px;background:#fff;overflow:hidden;cursor:pointer}.simCard.active{border-color:#66a8f2;box-shadow:0 0 0 3px rgba(0,94,184,.08)}.simTop{min-height:70px;padding:12px 10px;text-align:center;font-size:15px;font-weight:950;color:#1c3856}.simTop span{display:block;margin-top:5px;color:#6e7f92;font-size:12px;font-weight:800}.scene{position:relative;height:185px;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(0,0,0,.03)),url('https://picsum.photos/900/520?random=183') center/cover no-repeat;overflow:hidden}.scene:after{content:"";position:absolute;inset:0;opacity:0}.simCard.large .scene:after{opacity:1;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);mask-image:radial-gradient(circle at 50% 50%,#000 0 44%,rgba(0,0,0,.5) 56%,transparent 76%);-webkit-mask-image:radial-gradient(circle at 50% 50%,#000 0 44%,rgba(0,0,0,.5) 56%,transparent 76%)}.simCard.small .scene:after{opacity:1;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);background:radial-gradient(circle at 50% 50%,transparent 0 40%,rgba(0,0,0,.45) 66%,rgba(0,0,0,.72) 100%);mask-image:radial-gradient(circle at 50% 50%,transparent 0 42%,#000 66% 100%);-webkit-mask-image:radial-gradient(circle at 50% 50%,transparent 0 42%,#000 66% 100%)}.badge{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:3;padding:7px 12px;border-radius:999px;color:#fff;font-size:12px;font-weight:950;white-space:nowrap}.good{background:var(--green)}.warn{background:var(--orange)}.simDesc{padding:10px 12px 13px;color:#62778b;text-align:center;font-size:12px;line-height:1.45;font-weight:800}.foot{margin:0 14px 14px;background:#f5f9fe;color:#65788e;border-radius:14px;padding:11px 13px;text-align:center;font-size:12px;line-height:1.45;font-weight:800}@media(max-width:900px){.capturePanel{grid-template-columns:1fr}.timerSide{border-left:0;border-top:1.5px solid #e5edf6}.resultPanel{grid-template-columns:1fr}.simGrid{grid-template-columns:1fr}}@media(max-width:560px){.topbar{height:50px;font-size:14px;justify-content:flex-start;padding-left:14px}.backBtn{right:8px;height:31px;font-size:11px;padding:0 9px}.wrap{padding:10px 8px 22px}.stepHeader{grid-template-columns:1fr 1fr 1fr;gap:6px}.stepCard{min-height:54px;padding:8px 5px}.stepTitle{font-size:12px}.stepDesc{display:none}.cameraFrame{aspect-ratio:1.15/1;min-height:230px;max-height:300px}.timerSide{padding:12px 14px}.ring{width:118px;height:118px;margin:8px auto 12px}.ringInner{width:88px;height:88px;font-size:39px}.timerText{min-height:24px}.resultImage{aspect-ratio:1.45/1}.measureCard{grid-template-columns:40px 1fr auto}.measureValue{font-size:22px}.scene{height:170px}}
+:root{
+  --blue:#005EB8;
+  --blue2:#0d6bd1;
+  --deep:#063487;
+  --text:#15304b;
+  --sub:#64778d;
+  --line:#dbe5f1;
+  --bg:#eef4fb;
+  --card:#fff;
+  --shadow:0 14px 34px rgba(20,52,90,.10);
+  --green:#1e9b48;
+  --orange:#ff9800;
+  --red:#ee3333;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Segoe UI",Arial,sans-serif;
+}
+.topbar{
+  height:52px;
+  background:linear-gradient(180deg,#073a91 0%,#063487 100%);
+  color:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:17px;
+  font-weight:950;
+  letter-spacing:-.03em;
+  position:sticky;
+  top:0;
+  z-index:50;
+  box-shadow:0 6px 18px rgba(5,43,112,.18);
+}
+.backBtn{
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  border:1.4px solid rgba(255,255,255,.58);
+  background:rgba(255,255,255,.08);
+  color:#fff;
+  border-radius:999px;
+  height:34px;
+  padding:0 12px;
+  font-size:13px;
+  font-weight:900;
+}
+.wrap{
+  width:min(100%,1120px);
+  margin:0 auto;
+  padding:14px 12px 26px;
+}
+.stepHeader{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:12px;
+}
+.stepCard{
+  background:#fff;
+  border:1.5px solid var(--line);
+  border-radius:16px;
+  min-height:68px;
+  padding:11px 12px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  box-shadow:0 10px 24px rgba(20,52,90,.06);
+}
+.stepCard.active{
+  border-color:#9bc5f4;
+  background:#f3f8ff;
+}
+.stepCard b{
+  display:inline-grid;
+  place-items:center;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:#dfe6ef;
+  color:#6d7d91;
+  margin-right:5px;
+  font-size:13px;
+}
+.stepCard.active b{
+  background:var(--blue);
+  color:#fff;
+}
+.stepTitle{
+  font-size:14px;
+  font-weight:950;
+  color:#263e5a;
+}
+.stepCard.active .stepTitle{color:var(--blue)}
+.stepDesc{
+  margin-top:5px;
+  font-size:11px;
+  font-weight:800;
+  color:#6d7d91;
+  text-align:center;
+}
+.panel{
+  background:#fff;
+  border:1.5px solid var(--line);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  margin-bottom:12px;
+}
+.capturePanel{
+  display:grid;
+  grid-template-columns:1fr 270px;
+}
+.panelHead{
+  padding:14px 16px 10px;
+}
+.panelTitle{
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:19px;
+  line-height:1.25;
+  font-weight:950;
+  letter-spacing:-.035em;
+}
+.blueDot{
+  width:13px;
+  height:13px;
+  border-radius:50%;
+  background:var(--blue);
+  display:inline-block;
+  flex:0 0 13px;
+}
+.panelDesc{
+  margin:6px 0 0;
+  color:var(--sub);
+  font-size:13px;
+  line-height:1.45;
+  font-weight:800;
+}
+.cameraSide{padding:0 14px 14px}
+.cameraFrame{
+  position:relative;
+  width:100%;
+  aspect-ratio:1.55/1;
+  min-height:260px;
+  max-height:390px;
+  border-radius:16px;
+  overflow:hidden;
+  background:#111b2a;
+}
+#video{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform:scaleX(-1);
+}
+#captureCanvas,#liveCanvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+}
+#captureCanvas{display:none;z-index:2}
+#liveCanvas{z-index:4;pointer-events:none}
+.cameraFrame.captured #video{display:none}
+.cameraFrame.captured #liveCanvas{display:none}
+.cameraFrame.captured #captureCanvas{display:block}
+.camBadge{
+  position:absolute;
+  left:13px;
+  top:13px;
+  z-index:8;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.92);
+  color:#1d3854;
+  font-size:12px;
+  font-weight:950;
+}
+.camBadge i{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#e34545;
+  display:block;
+}
+.faceGuide{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:82%;
+  height:60%;
+  transform:translate(-50%,-50%);
+  border:4px solid rgba(255,255,255,.9);
+  border-radius:50% / 44%;
+  z-index:3;
+  pointer-events:none;
+  box-shadow:0 0 0 999px rgba(0,0,0,.14);
+}
+.faceGuide::after{
+  content:"";
+  position:absolute;
+  left:-8%;
+  top:50%;
+  width:116%;
+  border-top:1.4px dashed rgba(255,255,255,.65);
+}
+.guideText{
+  position:absolute;
+  left:28px;
+  right:28px;
+  bottom:14px;
+  z-index:9;
+  background:rgba(0,0,0,.55);
+  color:#fff;
+  border-radius:14px;
+  padding:11px 12px;
+  text-align:center;
+  font-size:14px;
+  font-weight:950;
+  line-height:1.4;
+}
+.guideText small{
+  display:block;
+  margin-top:3px;
+  font-size:12px;
+  font-weight:800;
+  opacity:.92;
+}
+.timerSide{
+  border-left:1.5px solid #e5edf6;
+  padding:14px 18px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+.timerTitle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:var(--blue);
+  font-size:17px;
+  font-weight:950;
+  letter-spacing:-.03em;
+  margin-bottom:8px;
+}
+.timerText{
+  color:#667a91;
+  font-size:13px;
+  line-height:1.45;
+  font-weight:800;
+  min-height:38px;
+}
+.ring{
+  margin:12px auto 18px;
+  width:150px;
+  height:150px;
+  border-radius:50%;
+  background:conic-gradient(var(--blue) var(--progress,0deg),#edf1f6 0deg);
+  display:grid;
+  place-items:center;
+}
+.ringInner{
+  width:112px;
+  height:112px;
+  border-radius:50%;
+  background:#fff;
+  display:grid;
+  place-items:center;
+  color:#004fa9;
+  font-size:48px;
+  font-weight:950;
+  box-shadow:inset 0 0 0 1px #edf2f8;
+}
+.retryBtn{
+  width:100%;
+  height:42px;
+  border:none;
+  border-radius:10px;
+  background:#f0f2f5;
+  color:#41617f;
+  font-weight:950;
+}
+.analysisBody{
+  display:grid;
+  grid-template-columns:1fr 220px;
+  gap:14px;
+  padding:0 14px 16px;
+  align-items:stretch;
+}
+.analysisImage{
+  position:relative;
+  width:100%;
+  aspect-ratio:1.55/1;
+  border-radius:16px;
+  overflow:hidden;
+  background:#e7edf5;
+}
+#analysisCanvas{
+  width:100%;
+  height:100%;
+  display:block;
+}
+.optionPanel{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.legendMini{
+  display:grid;
+  gap:8px;
+  padding:8px 2px 8px;
+}
+.legendMini div{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  font-size:13px;
+  font-weight:950;
+  color:#263e5a;
+}
+.iconCircle{
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  display:inline-block;
+}
+.iconCircle.iris{border:2.5px dashed var(--blue)}
+.iconCircle.pupil{border:2.5px solid #111}
+.iconCircle.optic{border:2.5px solid var(--orange)}
+.optionBtn{
+  border:1.5px solid var(--line);
+  border-radius:13px;
+  background:#fff;
+  min-height:70px;
+  padding:10px;
+  text-align:left;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  cursor:pointer;
+}
+.optionBtn .radioIcon{
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  border:2px solid #b4c2d2;
+  flex:0 0 22px;
+}
+.optionBtn strong{
+  display:block;
+  font-size:14px;
+  line-height:1.25;
+  color:#183756;
+}
+.optionBtn span{
+  display:block;
+  margin-top:4px;
+  font-size:12px;
+  font-weight:850;
+  color:#63758b;
+}
+.optionBtn.current.active{
+  border-color:var(--green);
+  background:#f4fff7;
+}
+.optionBtn.current.active .radioIcon{
+  background:var(--green);
+  border-color:var(--green);
+  box-shadow:inset 0 0 0 5px #fff;
+}
+.optionBtn.large.active{
+  border-color:var(--orange);
+  background:#fffaf2;
+}
+.optionBtn.large.active .radioIcon{
+  border-color:var(--orange);
+}
+.optionBtn.small.active{
+  border-color:var(--red);
+  background:#fff7f7;
+}
+.optionBtn.small.active .radioIcon{
+  border-color:var(--red);
+}
+.simGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  padding:0 14px 16px;
+}
+.simCard{
+  border:1.5px solid var(--line);
+  border-radius:17px;
+  background:#fff;
+  overflow:hidden;
+  cursor:pointer;
+}
+.simCard.active.current{
+  border-color:var(--green);
+  background:#fbfffc;
+}
+.simCard.active.large{
+  border-color:var(--orange);
+  background:#fffaf2;
+}
+.simCard.active.small{
+  border-color:var(--red);
+  background:#fff7f7;
+}
+.simTop{
+  min-height:70px;
+  padding:12px 10px;
+  text-align:center;
+  font-size:15px;
+  font-weight:950;
+  color:#1c3856;
+}
+.simTop span{
+  display:block;
+  margin-top:5px;
+  color:#6e7f92;
+  font-size:12px;
+  font-weight:800;
+}
+.scene{
+  position:relative;
+  height:185px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,0),rgba(0,0,0,.03)),
+    url("https://picsum.photos/900/520?random=183") center/cover no-repeat;
+  overflow:hidden;
+}
+.scene::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  opacity:0;
+}
+.simCard.large .scene::after{
+  opacity:1;
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+  mask-image:radial-gradient(circle at 50% 50%,#000 0 44%,rgba(0,0,0,.5) 56%,transparent 76%);
+  -webkit-mask-image:radial-gradient(circle at 50% 50%,#000 0 44%,rgba(0,0,0,.5) 56%,transparent 76%);
+}
+.simCard.small .scene::after{
+  opacity:1;
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+  background:radial-gradient(circle at 50% 50%,transparent 0 40%,rgba(0,0,0,.45) 66%,rgba(0,0,0,.72) 100%);
+  mask-image:radial-gradient(circle at 50% 50%,transparent 0 42%,#000 66% 100%);
+  -webkit-mask-image:radial-gradient(circle at 50% 50%,transparent 0 42%,#000 66% 100%);
+}
+.badge{
+  position:absolute;
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%);
+  z-index:3;
+  padding:7px 12px;
+  border-radius:999px;
+  color:#fff;
+  font-size:12px;
+  font-weight:950;
+  white-space:nowrap;
+}
+.good{background:var(--green)}
+.warn{background:var(--orange)}
+.bad{background:var(--red)}
+.simDesc{
+  padding:10px 12px 13px;
+  color:#62778b;
+  text-align:center;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:800;
+}
+.foot{
+  margin:0 14px 14px;
+  background:#f5f9fe;
+  color:#65788e;
+  border-radius:14px;
+  padding:11px 13px;
+  text-align:center;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:800;
+}
+@media(max-width:900px){
+  .capturePanel{grid-template-columns:1fr}
+  .timerSide{border-left:0;border-top:1.5px solid #e5edf6}
+  .analysisBody{grid-template-columns:1fr}
+  .optionPanel{display:grid;grid-template-columns:1fr}
+  .simGrid{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .topbar{height:50px;font-size:14px;justify-content:flex-start;padding-left:14px}
+  .backBtn{right:8px;height:31px;font-size:11px;padding:0 9px}
+  .wrap{padding:10px 8px 22px}
+  .stepHeader{grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .stepCard{min-height:54px;padding:8px 5px}
+  .stepTitle{font-size:12px}
+  .stepDesc{display:none}
+  .cameraFrame{aspect-ratio:1.18/1;min-height:230px;max-height:300px}
+  .timerSide{padding:12px 14px}
+  .ring{width:118px;height:118px;margin:8px auto 12px}
+  .ringInner{width:88px;height:88px;font-size:39px}
+  .timerText{min-height:24px}
+  .analysisImage{aspect-ratio:1.25/1}
+  .scene{height:170px}
+}
 </style>
 </head>
+
 <body>
-<div class="topbar">아큐브® 183가지 동공 사이즈별 광학부<button class="backBtn" onclick="history.back()">← 뒤로가기</button></div>
+<div class="topbar">
+  아큐브® 183가지 동공 사이즈별 광학부
+  <button class="backBtn" onclick="history.back()">← 뒤로가기</button>
+</div>
+
 <main class="wrap">
-<section class="stepHeader"><div class="stepCard active" id="step1"><div class="stepTitle"><b>1</b>촬영</div><div class="stepDesc">양 눈을 정면으로 바라봐 주세요.</div></div><div class="stepCard" id="step2"><div class="stepTitle"><b>2</b>분석</div><div class="stepDesc">동공과 홍채 크기를 분석합니다.</div></div><div class="stepCard" id="step3"><div class="stepTitle"><b>3</b>시뮬레이션</div><div class="stepDesc">광학부 크기에 따른 시야 확인.</div></div></section>
-<section class="panel capturePanel"><div><div class="panelHead"><h2 class="panelTitle"><span class="blueDot"></span>카메라 ON</h2></div><div class="cameraSide"><div class="cameraFrame" id="cameraFrame"><video id="video" playsinline autoplay muted></video><canvas id="captureCanvas"></canvas><canvas id="liveCanvas"></canvas><div class="camBadge"><i></i> CAMERA ON</div><div class="faceGuide" id="faceGuide"></div><div class="guideText" id="guideText">양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small></div></div></div></div><aside class="timerSide"><div class="timerTitle">📷 <span id="timerTitle">촬영 준비 중</span></div><div class="timerText" id="timerText">양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.</div><div class="ring" id="ring" style="--progress:0deg"><div class="ringInner" id="countNum">-</div></div><button class="retryBtn" id="retryBtn">다시 촬영</button></aside></section>
-<section class="panel"><div class="panelHead"><h2 class="panelTitle"><span class="blueDot"></span>분석 결과</h2><p class="panelDesc">촬영된 이미지를 확대해 동공과 홍채 기준 원을 표시합니다.</p></div><div class="resultPanel"><div class="resultImage"><canvas id="resultCanvas"></canvas></div><div class="measureStack"><div class="measureCard"><div class="measureIcon iris"></div><div class="measureName">홍채 직경(Iris)</div><div class="measureValue" id="irisValue">-</div></div><div class="measureCard"><div class="measureIcon pupil"></div><div class="measureName">동공 직경(Pupil)</div><div class="measureValue black" id="pupilValue">-</div></div><div class="notice">측정값은 참고용이며, 실제와 차이가 있을 수 있습니다.</div></div></div></section>
-<section class="panel"><div class="panelHead"><h2 class="panelTitle"><span class="blueDot"></span>시야 시뮬레이션</h2><p class="panelDesc">아래 옵션을 선택하면 동공과 광학부 사이즈 차이에 따른 시야를 확인할 수 있습니다.</p></div><div class="simGrid"><div class="simCard active current"><div class="simTop">① 현재 내 동공<span>현재 측정된 동공 기준</span></div><div class="scene"><div class="badge good">최적화된 시야</div></div><div class="simDesc">동공과 광학부가 잘 맞는 상태입니다.</div></div><div class="simCard large"><div class="simTop">② 광학부 &gt; 동공<span>렌즈 설계 광학부가 더 큰 경우</span></div><div class="scene"><div class="badge warn">중심부 흐림</div></div><div class="simDesc">중심부 시야가 흐려질 수 있습니다.</div></div><div class="simCard small"><div class="simTop">③ 광학부 &lt; 동공<span>렌즈 설계 광학부가 더 작은 경우</span></div><div class="scene"><div class="badge warn">주변부 흐림(Fish Bowl)</div></div><div class="simDesc">주변부 시야가 흐려질 수 있습니다.</div></div></div><div class="foot">시뮬레이션은 이해를 돕기 위한 예시이며, 개인에 따라 시야는 다를 수 있습니다.</div></section>
+  <section class="stepHeader">
+    <div class="stepCard active" id="step1">
+      <div class="stepTitle"><b>1</b>촬영</div>
+      <div class="stepDesc">양 눈을 정면으로 바라봐 주세요.</div>
+    </div>
+    <div class="stepCard" id="step2">
+      <div class="stepTitle"><b>2</b>분석</div>
+      <div class="stepDesc">동공과 홍채 위치를 표시합니다.</div>
+    </div>
+    <div class="stepCard" id="step3">
+      <div class="stepTitle"><b>3</b>시뮬레이션</div>
+      <div class="stepDesc">광학부 크기에 따른 시야 확인.</div>
+    </div>
+  </section>
+
+  <section class="panel capturePanel">
+    <div>
+      <div class="panelHead">
+        <h2 class="panelTitle"><span class="blueDot"></span>카메라 ON</h2>
+      </div>
+      <div class="cameraSide">
+        <div class="cameraFrame" id="cameraFrame">
+          <video id="video" playsinline autoplay muted></video>
+          <canvas id="captureCanvas"></canvas>
+          <canvas id="liveCanvas"></canvas>
+          <div class="camBadge"><i></i> CAMERA ON</div>
+          <div class="faceGuide" id="faceGuide"></div>
+          <div class="guideText" id="guideText">
+            양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.
+            <small>잠시 후 자동으로 촬영됩니다.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="timerSide">
+      <div class="timerTitle">📷 <span id="timerTitle">촬영 준비 중</span></div>
+      <div class="timerText" id="timerText">양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.</div>
+      <div class="ring" id="ring" style="--progress:0deg">
+        <div class="ringInner" id="countNum">-</div>
+      </div>
+      <button class="retryBtn" id="retryBtn">다시 촬영</button>
+    </aside>
+  </section>
+
+  <section class="panel">
+    <div class="panelHead">
+      <h2 class="panelTitle"><span class="blueDot"></span>분석 결과</h2>
+      <p class="panelDesc">촬영된 이미지의 한쪽 눈을 확대해 동공, 홍채, 광학부 위치를 표시합니다.</p>
+    </div>
+
+    <div class="analysisBody">
+      <div class="analysisImage">
+        <canvas id="analysisCanvas"></canvas>
+      </div>
+
+      <aside class="optionPanel">
+        <div class="legendMini">
+          <div><span class="iconCircle iris"></span>홍채(Iris)</div>
+          <div><span class="iconCircle pupil"></span>동공(Pupil)</div>
+          <div><span class="iconCircle optic"></span>렌즈 광학부</div>
+        </div>
+
+        <button class="optionBtn current active" data-mode="current">
+          <span class="radioIcon"></span>
+          <div><strong>① 동공 = 광학부</strong><span>(현재) 선명</span></div>
+        </button>
+
+        <button class="optionBtn large" data-mode="large">
+          <span class="radioIcon"></span>
+          <div><strong>② 광학부 &gt; 동공</strong><span>중심부 흐림</span></div>
+        </button>
+
+        <button class="optionBtn small" data-mode="small">
+          <span class="radioIcon"></span>
+          <div><strong>③ 광학부 &lt; 동공</strong><span>주변부 흐림(Fish Bowl)</span></div>
+        </button>
+      </aside>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panelHead">
+      <h2 class="panelTitle"><span class="blueDot"></span>시야 시뮬레이션</h2>
+      <p class="panelDesc">우측 옵션을 선택하면 동공과 광학부 사이즈 차이에 따른 시야가 함께 변경됩니다.</p>
+    </div>
+
+    <div class="simGrid">
+      <div class="simCard active current" data-mode="current">
+        <div class="simTop">① 동공 = 광학부<span>(현재) 측정된 동공 기준</span></div>
+        <div class="scene"><div class="badge good">선명한 시야</div></div>
+        <div class="simDesc">동공과 광학부가 일치하여 전체 시야가 선명합니다.</div>
+      </div>
+      <div class="simCard large" data-mode="large">
+        <div class="simTop">② 광학부 &gt; 동공<span>렌즈 설계 광학부가 더 큰 경우</span></div>
+        <div class="scene"><div class="badge warn">중심부 흐림</div></div>
+        <div class="simDesc">광학부가 커서 중심부 시야가 흐려질 수 있습니다.</div>
+      </div>
+      <div class="simCard small" data-mode="small">
+        <div class="simTop">③ 광학부 &lt; 동공<span>렌즈 설계 광학부가 더 작은 경우</span></div>
+        <div class="scene"><div class="badge bad">주변부 흐림(Fish Bowl)</div></div>
+        <div class="simDesc">광학부가 작아 주변부 시야가 흐려질 수 있습니다.</div>
+      </div>
+    </div>
+
+    <div class="foot">시뮬레이션은 이해를 돕기 위한 예시이며, 개인에 따라 시야는 다를 수 있습니다.</div>
+  </section>
 </main>
+
 <script>
-const video=document.getElementById('video'),cameraFrame=document.getElementById('cameraFrame'),liveCanvas=document.getElementById('liveCanvas'),captureCanvas=document.getElementById('captureCanvas'),resultCanvas=document.getElementById('resultCanvas'),timerTitle=document.getElementById('timerTitle'),timerText=document.getElementById('timerText'),countNum=document.getElementById('countNum'),ring=document.getElementById('ring'),retryBtn=document.getElementById('retryBtn'),irisValue=document.getElementById('irisValue'),pupilValue=document.getElementById('pupilValue'),guideText=document.getElementById('guideText'),step1=document.getElementById('step1'),step2=document.getElementById('step2'),step3=document.getElementById('step3');
-let stream=null,faceMesh=null,camera=null,counting=false,captured=false,countdownTimer=null,latestFace=null;
-const FACE_OVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109],LEFT_EYE=[33,133,159,145,160,144,158,153],RIGHT_EYE=[362,263,386,374,385,380,387,373];
-function setStep(n){[step1,step2,step3].forEach((el,i)=>el.classList.toggle('active',i+1<=n))}function boxFrom(lm,ids,w,h){let xs=[],ys=[];ids.forEach(id=>{xs.push(lm[id].x*w);ys.push(lm[id].y*h)});return{x1:Math.min(...xs),x2:Math.max(...xs),y1:Math.min(...ys),y2:Math.max(...ys),cx:(Math.min(...xs)+Math.max(...xs))/2,cy:(Math.min(...ys)+Math.max(...ys))/2,width:Math.max(...xs)-Math.min(...xs),height:Math.max(...ys)-Math.min(...ys)}}
-function drawLive(lm){const rect=cameraFrame.getBoundingClientRect();liveCanvas.width=rect.width*devicePixelRatio;liveCanvas.height=rect.height*devicePixelRatio;const ctx=liveCanvas.getContext('2d');ctx.clearRect(0,0,liveCanvas.width,liveCanvas.height);if(!lm||!video.videoWidth)return;const w=video.videoWidth,h=video.videoHeight,sx=liveCanvas.width/w,sy=liveCanvas.height/h,left=boxFrom(lm,LEFT_EYE,w,h),right=boxFrom(lm,RIGHT_EYE,w,h);ctx.save();ctx.scale(-1,1);ctx.translate(-liveCanvas.width,0);ctx.lineWidth=3*devicePixelRatio;ctx.strokeStyle='rgba(255,255,255,.9)';ctx.setLineDash([8*devicePixelRatio,6*devicePixelRatio]);[left,right].forEach(eye=>{ctx.beginPath();ctx.ellipse(eye.cx*sx,eye.cy*sy,eye.width*.78*sx,Math.max(eye.height*1.8*sy,eye.width*.28*sx),0,0,Math.PI*2);ctx.stroke()});ctx.restore()}
-function faceFillRatio(lm){const w=video.videoWidth||1280,h=video.videoHeight||720,face=boxFrom(lm,FACE_OVAL,w,h),left=boxFrom(lm,LEFT_EYE,w,h),right=boxFrom(lm,RIGHT_EYE,w,h),eyeDistance=Math.abs(right.cx-left.cx)+(left.width+right.width)/2;latestFace={face,left,right,eyeDistance};return Math.min(1,eyeDistance/(w*.38))}
-function onResults(results){if(captured)return;const lm=results.multiFaceLandmarks&&results.multiFaceLandmarks[0];if(!lm){latestFace=null;drawLive(null);if(!counting){timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 보이도록 정면을 바라봐 주세요.';countNum.textContent='-';ring.style.setProperty('--progress','0deg')}return}drawLive(lm);const fill=faceFillRatio(lm);if(!counting){if(fill>=.66)startCountdown();else{timerTitle.textContent='촬영 준비 중';timerText.textContent=`조금 더 가까이 와주세요. 현재 약 ${Math.round(fill*100)}%`;countNum.textContent='-';ring.style.setProperty('--progress',`${Math.round(fill*260)}deg`)}}}
-function startCountdown(){if(counting||captured)return;counting=true;let n=3;timerTitle.textContent='자동 촬영 중';timerText.textContent='양 눈이 잘 보입니다. 그대로 유지해주세요.';guideText.innerHTML='정면을 그대로 바라봐 주세요.<small>3초 후 자동으로 촬영됩니다.</small>';countNum.textContent=n;ring.style.setProperty('--progress','120deg');countdownTimer=setInterval(()=>{n--;if(!latestFace){cancelCountdown();return}if(n<=0){clearInterval(countdownTimer);counting=false;captureFace()}else{countNum.textContent=n;ring.style.setProperty('--progress',`${(4-n)*120}deg`)}},1000)}
-function cancelCountdown(){clearInterval(countdownTimer);counting=false;countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 보이도록 다시 맞춰주세요.';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>'}
-function captureFace(){if(!latestFace||!video.videoWidth)return;captured=true;setStep(2);timerTitle.textContent='분석 완료';timerText.textContent='양 눈을 확대 촬영해 동공과 홍채 기준 원을 표시했습니다.';countNum.textContent='✓';ring.style.setProperty('--progress','360deg');cameraFrame.classList.add('captured');guideText.style.display='none';const w=video.videoWidth,h=video.videoHeight,left=latestFace.left,right=latestFace.right,cx=(left.cx+right.cx)/2,cy=(left.cy+right.cy)/2,cropW=Math.min(w,Math.max(latestFace.eyeDistance*2.8,520)),cropH=cropW*.58;let sx=Math.max(0,cx-cropW/2),sy=Math.max(0,cy-cropH/2);if(sx+cropW>w)sx=w-cropW;if(sy+cropH>h)sy=h-cropH;sx=Math.max(0,sx);sy=Math.max(0,sy);captureCanvas.width=1000;captureCanvas.height=580;const cctx=captureCanvas.getContext('2d');cctx.save();cctx.scale(-1,1);cctx.drawImage(video,sx,sy,cropW,cropH,-captureCanvas.width,0,captureCanvas.width,captureCanvas.height);cctx.restore();drawResult(sx,sy,cropW,cropH,left,right);stopCamera();setStep(3)}
-function drawResult(sx,sy,cropW,cropH,left,right){resultCanvas.width=1000;resultCanvas.height=580;const ctx=resultCanvas.getContext('2d');ctx.drawImage(captureCanvas,0,0,1000,580);const eyes=[left,right].map(eye=>({x:1000-((eye.cx-sx)/cropW*1000),y:(eye.cy-sy)/cropH*580,irisR:Math.max(38,eye.width/cropW*1000*.42)}));ctx.save();ctx.strokeStyle='rgba(255,255,255,.62)';ctx.setLineDash([8,7]);ctx.lineWidth=1.5;ctx.beginPath();const midY=(eyes[0].y+eyes[1].y)/2,midX=(eyes[0].x+eyes[1].x)/2;ctx.moveTo(0,midY);ctx.lineTo(1000,midY);ctx.moveTo(midX,0);ctx.lineTo(midX,580);ctx.stroke();ctx.setLineDash([]);eyes.forEach(e=>{const pupilR=e.irisR*.365;ctx.strokeStyle='#005EB8';ctx.lineWidth=4.5;ctx.beginPath();ctx.arc(e.x,e.y,e.irisR,0,Math.PI*2);ctx.stroke();ctx.strokeStyle='#111';ctx.lineWidth=4;ctx.beginPath();ctx.arc(e.x,e.y,pupilR,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(e.x,e.y,3.5,0,Math.PI*2);ctx.fill()});ctx.restore();irisValue.textContent='11.8 mm';pupilValue.textContent='4.3 mm'}
-function resetAll(){captured=false;counting=false;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';irisValue.textContent='-';pupilValue.textContent='-';setStep(1);startCamera()}
-async function startCamera(){try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:false});video.srcObject=stream;await video.play();faceMesh=new FaceMesh({locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});faceMesh.onResults(onResults);camera=new Camera(video,{onFrame:async()=>{if(!captured&&faceMesh)await faceMesh.send({image:video})},width:1280,height:720});camera.start()}catch(e){timerTitle.textContent='카메라 오류';timerText.textContent='카메라 권한을 허용한 뒤 다시 시도해주세요.';countNum.textContent='!'}}function stopCamera(){if(camera&&camera.stop)camera.stop();camera=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}retryBtn.addEventListener('click',resetAll);document.querySelectorAll('.simCard').forEach(card=>{card.addEventListener('click',()=>{document.querySelectorAll('.simCard').forEach(c=>c.classList.remove('active'));card.classList.add('active')})});startCamera();
+const video = document.getElementById('video');
+const cameraFrame = document.getElementById('cameraFrame');
+const liveCanvas = document.getElementById('liveCanvas');
+const captureCanvas = document.getElementById('captureCanvas');
+const analysisCanvas = document.getElementById('analysisCanvas');
+const timerTitle = document.getElementById('timerTitle');
+const timerText = document.getElementById('timerText');
+const countNum = document.getElementById('countNum');
+const ring = document.getElementById('ring');
+const retryBtn = document.getElementById('retryBtn');
+const guideText = document.getElementById('guideText');
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
+
+let stream = null;
+let faceMesh = null;
+let camera = null;
+let counting = false;
+let captured = false;
+let countdownTimer = null;
+let latestFace = null;
+let selectedMode = 'current';
+let cropMeta = null;
+
+const FACE_OVAL = [10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+const LEFT_EYE = [33,133,159,145,160,144,158,153];
+const RIGHT_EYE = [362,263,386,374,385,380,387,373];
+
+function setStep(n){
+  [step1,step2,step3].forEach((el,i)=>el.classList.toggle('active',i+1<=n));
+}
+function boxFrom(lm, ids, w, h){
+  let xs=[], ys=[];
+  ids.forEach(id=>{xs.push(lm[id].x*w);ys.push(lm[id].y*h);});
+  return {
+    x1:Math.min(...xs),x2:Math.max(...xs),y1:Math.min(...ys),y2:Math.max(...ys),
+    cx:(Math.min(...xs)+Math.max(...xs))/2,cy:(Math.min(...ys)+Math.max(...ys))/2,
+    width:Math.max(...xs)-Math.min(...xs),height:Math.max(...ys)-Math.min(...ys)
+  };
+}
+function drawLive(lm){
+  const rect = cameraFrame.getBoundingClientRect();
+  liveCanvas.width = rect.width * devicePixelRatio;
+  liveCanvas.height = rect.height * devicePixelRatio;
+  const ctx = liveCanvas.getContext('2d');
+  ctx.clearRect(0,0,liveCanvas.width,liveCanvas.height);
+  if(!lm || !video.videoWidth) return;
+
+  const w = video.videoWidth, h = video.videoHeight;
+  const sx = liveCanvas.width / w;
+  const sy = liveCanvas.height / h;
+  const left = boxFrom(lm, LEFT_EYE, w, h);
+  const right = boxFrom(lm, RIGHT_EYE, w, h);
+
+  ctx.save();
+  ctx.scale(-1,1);
+  ctx.translate(-liveCanvas.width,0);
+  ctx.lineWidth = 3 * devicePixelRatio;
+  ctx.strokeStyle = 'rgba(255,255,255,.9)';
+  ctx.setLineDash([8*devicePixelRatio,6*devicePixelRatio]);
+  [left,right].forEach(eye=>{
+    ctx.beginPath();
+    ctx.ellipse(eye.cx*sx, eye.cy*sy, eye.width*.78*sx, Math.max(eye.height*1.8*sy, eye.width*.28*sx), 0, 0, Math.PI*2);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+function faceFillRatio(lm){
+  const w = video.videoWidth || 1280;
+  const h = video.videoHeight || 720;
+  const face = boxFrom(lm, FACE_OVAL, w, h);
+  const left = boxFrom(lm, LEFT_EYE, w, h);
+  const right = boxFrom(lm, RIGHT_EYE, w, h);
+  const eyeDistance = Math.abs(right.cx-left.cx) + (left.width+right.width)/2;
+  latestFace = {face,left,right,eyeDistance};
+  const target = w * 0.38;
+  return Math.min(1, eyeDistance / target);
+}
+function onResults(results){
+  if(captured) return;
+  const lm = results.multiFaceLandmarks && results.multiFaceLandmarks[0];
+  if(!lm){
+    latestFace = null;
+    drawLive(null);
+    if(!counting){
+      timerTitle.textContent = '촬영 준비 중';
+      timerText.textContent = '양 눈이 보이도록 정면을 바라봐 주세요.';
+      countNum.textContent = '-';
+      ring.style.setProperty('--progress','0deg');
+    }
+    return;
+  }
+  drawLive(lm);
+  const fill = faceFillRatio(lm);
+
+  if(!counting){
+    if(fill >= .66){
+      startCountdown();
+    }else{
+      timerTitle.textContent = '촬영 준비 중';
+      timerText.textContent = `조금 더 가까이 와주세요. 현재 약 ${Math.round(fill*100)}%`;
+      countNum.textContent = '-';
+      ring.style.setProperty('--progress', `${Math.round(fill*260)}deg`);
+    }
+  }
+}
+function startCountdown(){
+  if(counting || captured) return;
+  counting = true;
+  let n=3;
+  timerTitle.textContent = '자동 촬영 중';
+  timerText.textContent = '양 눈이 잘 보입니다. 그대로 유지해주세요.';
+  guideText.innerHTML = '정면을 그대로 바라봐 주세요.<small>3초 후 자동으로 촬영됩니다.</small>';
+  countNum.textContent = n;
+  ring.style.setProperty('--progress','120deg');
+
+  countdownTimer = setInterval(()=>{
+    n--;
+    if(!latestFace){ cancelCountdown(); return; }
+    if(n<=0){
+      clearInterval(countdownTimer);
+      counting=false;
+      captureFace();
+    }else{
+      countNum.textContent=n;
+      ring.style.setProperty('--progress', `${(4-n)*120}deg`);
+    }
+  },1000);
+}
+function cancelCountdown(){
+  clearInterval(countdownTimer);
+  counting=false;
+  countNum.textContent='-';
+  ring.style.setProperty('--progress','0deg');
+  timerTitle.textContent='촬영 준비 중';
+  timerText.textContent='양 눈이 보이도록 다시 맞춰주세요.';
+  guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';
+}
+function captureFace(){
+  if(!latestFace || !video.videoWidth) return;
+  captured = true;
+  setStep(2);
+  timerTitle.textContent = '분석 완료';
+  timerText.textContent = '한쪽 눈을 확대해 동공, 홍채, 광학부 위치를 표시했습니다.';
+  countNum.textContent = '✓';
+  ring.style.setProperty('--progress','360deg');
+  cameraFrame.classList.add('captured');
+  guideText.style.display='none';
+
+  const w=video.videoWidth, h=video.videoHeight;
+  const left=latestFace.left, right=latestFace.right;
+  const cx=(left.cx+right.cx)/2;
+  const cy=(left.cy+right.cy)/2;
+  const cropW=Math.min(w, Math.max(latestFace.eyeDistance*2.8, 520));
+  const cropH=cropW*0.58;
+  let sx=Math.max(0,cx-cropW/2);
+  let sy=Math.max(0,cy-cropH/2);
+  if(sx+cropW>w) sx=w-cropW;
+  if(sy+cropH>h) sy=h-cropH;
+  sx=Math.max(0,sx); sy=Math.max(0,sy);
+
+  captureCanvas.width=1000;
+  captureCanvas.height=580;
+  const cctx=captureCanvas.getContext('2d');
+  cctx.save();
+  cctx.scale(-1,1);
+  cctx.drawImage(video,sx,sy,cropW,cropH,-captureCanvas.width,0,captureCanvas.width,captureCanvas.height);
+  cctx.restore();
+
+  const target = right;
+  const singleW = Math.max(target.width*5.4, target.height*11.0, 260);
+  const singleH = singleW*.72;
+  let esx=Math.max(0,target.cx-singleW/2);
+  let esy=Math.max(0,target.cy-singleH/2);
+  if(esx+singleW>w) esx=w-singleW;
+  if(esy+singleH>h) esy=h-singleH;
+  esx=Math.max(0,esx); esy=Math.max(0,esy);
+
+  cropMeta = {esx,esy,singleW,singleH,target};
+  drawAnalysis();
+  stopCamera();
+  setStep(3);
+}
+function drawAnalysis(){
+  if(!cropMeta) return;
+  const {esx,esy,singleW,singleH,target} = cropMeta;
+  const w = video.videoWidth || 1280;
+  const h = video.videoHeight || 720;
+
+  analysisCanvas.width=1000;
+  analysisCanvas.height=700;
+  const ctx=analysisCanvas.getContext('2d');
+
+  ctx.save();
+  ctx.scale(-1,1);
+  ctx.drawImage(captureCanvas,0,0,1,1,0,0,1,1);
+  ctx.restore();
+
+  const temp = document.createElement('canvas');
+  temp.width=1000;
+  temp.height=700;
+  const tctx=temp.getContext('2d');
+  tctx.save();
+  tctx.scale(-1,1);
+  tctx.drawImage(video,esx,esy,singleW,singleH,-1000,0,1000,700);
+  tctx.restore();
+
+  ctx.clearRect(0,0,1000,700);
+  ctx.drawImage(temp,0,0);
+
+  const ex = 1000 - ((target.cx-esx)/singleW*1000);
+  const ey = ((target.cy-esy)/singleH*700);
+  const irisR = Math.max(170, target.width/singleW*1000*.58);
+  const pupilR = irisR*.38;
+  let opticR = pupilR;
+  let opticColor = '#1e9b48';
+
+  if(selectedMode === 'large'){
+    opticR = pupilR*1.72;
+    opticColor = '#ff9800';
+  }else if(selectedMode === 'small'){
+    opticR = pupilR*.72;
+    opticColor = '#ee3333';
+  }
+
+  ctx.save();
+  ctx.strokeStyle='rgba(255,255,255,.74)';
+  ctx.setLineDash([8,7]);
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(0,ey); ctx.lineTo(1000,ey);
+  ctx.moveTo(ex,0); ctx.lineTo(ex,700);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle='#005EB8';
+  ctx.lineWidth=5;
+  ctx.setLineDash([14,8]);
+  ctx.beginPath();
+  ctx.arc(ex,ey,irisR,0,Math.PI*2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle='#111';
+  ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.arc(ex,ey,pupilR,0,Math.PI*2);
+  ctx.stroke();
+
+  ctx.strokeStyle=opticColor;
+  ctx.lineWidth=6;
+  ctx.beginPath();
+  ctx.arc(ex,ey,opticR,0,Math.PI*2);
+  ctx.stroke();
+
+  ctx.fillStyle=opticColor;
+  for(const p of [[ex,ey-opticR],[ex,ey+opticR],[ex-opticR,ey],[ex+opticR,ey]]){
+    ctx.beginPath();
+    ctx.arc(p[0],p[1],7,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function setMode(mode){
+  selectedMode = mode;
+  document.querySelectorAll('.optionBtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===mode));
+  document.querySelectorAll('.simCard').forEach(card=>card.classList.toggle('active',card.dataset.mode===mode));
+  drawAnalysis();
+}
+function resetAll(){
+  captured=false;
+  counting=false;
+  clearInterval(countdownTimer);
+  cameraFrame.classList.remove('captured');
+  guideText.style.display='block';
+  guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';
+  countNum.textContent='-';
+  ring.style.setProperty('--progress','0deg');
+  timerTitle.textContent='촬영 준비 중';
+  timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';
+  setStep(1);
+  startCamera();
+}
+async function startCamera(){
+  try{
+    if(stream) return;
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},
+      audio:false
+    });
+    video.srcObject=stream;
+    await video.play();
+
+    faceMesh=new FaceMesh({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
+    faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});
+    faceMesh.onResults(onResults);
+
+    camera=new Camera(video,{
+      onFrame:async()=>{ if(!captured && faceMesh) await faceMesh.send({image:video}); },
+      width:1280,height:720
+    });
+    camera.start();
+  }catch(e){
+    timerTitle.textContent='카메라 오류';
+    timerText.textContent='카메라 권한을 허용한 뒤 다시 시도해주세요.';
+    countNum.textContent='!';
+  }
+}
+function stopCamera(){
+  if(camera && camera.stop) camera.stop();
+  camera=null;
+  if(stream){
+    stream.getTracks().forEach(t=>t.stop());
+    stream=null;
+  }
+}
+retryBtn.addEventListener('click',resetAll);
+document.querySelectorAll('.optionBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));
+document.querySelectorAll('.simCard').forEach(card=>card.addEventListener('click',()=>setMode(card.dataset.mode)));
+startCamera();
 </script>
 </body>
 </html>
