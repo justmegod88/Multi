@@ -118,7 +118,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 .cameraFrame.captured + .afterCaptureBar{display:flex}
 .completeText{font-weight:950;color:var(--blue);font-size:15px}
 .analysisControls{display:none;padding:0 14px 16px}
-.singleFlowPanel.captured .analysisControls{display:block}
+.singleFlowPanel.captured .analysisControls{display:none!important}
 .mergedOptions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .mergedOptions .optionBtn{min-height:76px}
 .singleFlowPanel.captured .panelHead .desc{display:none}
@@ -319,92 +319,63 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 }
 
 
-/* === 177 mobile vision section refinements === */
-/* 재촬영 버튼: 분석 이미지 위가 아니라 패널 외부 우측 상단 */
-.singleFlowPanel .cameraSide{position:static!important}
-.singleFlowPanel.captured .panelHead{padding-right:132px!important}
-.cameraFrame.captured + .afterCaptureBar{
-  position:absolute!important;
-  right:14px!important;
-  top:12px!important;
-  z-index:60!important;
-}
 
-/* 모바일 전용: 좌측은 선택 버튼, 우측은 선택된 시야 이미지 1장만 */
+/* === mobile final: remove duplicated analysis buttons + single MF image viewer === */
+.analysisControls{display:none!important}
+.singleFlowPanel.captured .analysisControls{display:none!important}
+.simGrid{
+  display:block!important;
+  padding:0 14px 16px!important;
+}
+.simTabs{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin:0 0 12px;
+  width:100%;
+}
+.simTabBtn{
+  flex:1;
+  height:42px;
+  border:1.5px solid var(--line);
+  background:#fff;
+  color:#52677f;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:950;
+  letter-spacing:-.04em;
+  cursor:pointer;
+  padding:0 6px;
+  white-space:nowrap;
+}
+.simTabBtn.active.current{background:var(--green);border-color:var(--green);color:#fff}
+.simTabBtn.active.large{background:var(--orange);border-color:var(--orange);color:#fff}
+.simTabBtn.active.small{background:var(--red);border-color:var(--red);color:#fff}
+.simCard{
+  display:none!important;
+  border-radius:18px!important;
+}
+.simCard.active{
+  display:block!important;
+}
+.simTop{
+  display:none!important;
+}
+.scene{
+  height:310px!important;
+  border-radius:18px 18px 0 0;
+  background-size:cover!important;
+  background-position:center!important;
+}
+.simCard.current .scene{background-image:linear-gradient(180deg,rgba(255,255,255,0),rgba(0,0,0,.03)),url("MF1.png")!important}
+.simCard.large .scene{background-image:linear-gradient(180deg,rgba(255,255,255,0),rgba(0,0,0,.03)),url("MF2.png")!important}
+.simCard.small .scene{background-image:linear-gradient(180deg,rgba(255,255,255,0),rgba(0,0,0,.03)),url("MF3.png")!important}
 @media(max-width:560px){
-  .visionPanel .panelHead{padding:14px 14px 8px}
-  .visionPanel .desc{font-size:12px;line-height:1.45}
-  .visionPanel .simGrid{
-    display:grid!important;
-    grid-template-columns:34% 66%;
-    grid-template-rows:repeat(3,auto);
-    gap:8px 8px;
-    padding:0 8px 12px;
-    align-items:stretch;
-  }
-  .visionPanel .simCard{
-    display:contents!important;
-    border:0!important;
-    background:transparent!important;
-    overflow:visible!important;
-  }
-  .visionPanel .simTop{
-    grid-column:1;
-    min-height:64px;
-    height:64px;
-    padding:8px 6px;
-    border:1.5px solid var(--line);
-    border-radius:14px;
-    background:#fff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-direction:column;
-    text-align:center;
-    font-size:12px;
-    line-height:1.18;
-    letter-spacing:-.04em;
-  }
-  .visionPanel .simTop span{
-    margin-top:4px;
-    font-size:10px;
-    line-height:1.2;
-  }
-  .visionPanel .simCard.current .simTop{grid-row:1}
-  .visionPanel .simCard.large .simTop{grid-row:2}
-  .visionPanel .simCard.small .simTop{grid-row:3}
-  .visionPanel .simCard.active.current .simTop{border-color:var(--green);background:#fbfffc}
-  .visionPanel .simCard.active.large .simTop{border-color:var(--orange);background:#fffaf2}
-  .visionPanel .simCard.active.small .simTop{border-color:var(--red);background:#fff7f7}
-
-  .visionPanel .scene{
-    display:none;
-    grid-column:2;
-    grid-row:1 / span 3;
-    height:208px;
-    min-height:208px;
-    border:1.5px solid var(--line);
-    border-radius:16px;
-  }
-  .visionPanel .simCard.active .scene{display:block}
-  .visionPanel .simDesc{display:none!important}
-  .visionPanel .badge{
-    bottom:12px;
-    font-size:11px;
-    padding:7px 10px;
-  }
-  .visionPanel .foot{
-    margin:0 8px 12px;
-    padding:9px 10px;
-    font-size:11px;
-    text-align:left;
-  }
-}
-@media(max-width:390px){
-  .visionPanel .simGrid{grid-template-columns:36% 64%;gap:7px}
-  .visionPanel .simTop{font-size:11px;height:62px;min-height:62px}
-  .visionPanel .simTop span{font-size:9.5px}
-  .visionPanel .scene{height:200px;min-height:200px}
+  .simGrid{padding:0 12px 14px!important}
+  .simTabs{gap:5px;margin-bottom:10px}
+  .simTabBtn{height:40px;font-size:12px;padding:0 4px}
+  .scene{height:300px!important}
+  .simDesc{font-size:12px;padding:10px 10px 12px}
 }
 
 </style>
@@ -483,13 +454,19 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
     <div id="timerTitle" style="display:none">촬영 준비 중</div>
   </section>
 
-  <section class="panel visionPanel">
+  <section class="panel">
     <div class="panelHead">
       <h2 class="panelTitle"><span class="dot"></span>시야 체험</h2>
       <p class="desc">아래 옵션을 선택하면 렌즈 디자인 차이에 따른 시야 느낌을 비교할 수 있습니다.</p>
     </div>
 
     <div class="simGrid">
+      <div class="simTabs">
+        <button class="simTabBtn active current" data-mode="current">● 내 눈 맞춤</button>
+        <button class="simTabBtn large" data-mode="large">○ 설계가 큼</button>
+        <button class="simTabBtn small" data-mode="small">○ 설계가 작음</button>
+      </div>
+
       <div class="simCard active current" data-mode="current">
         <div class="simTop">① 내 눈에 맞는 설계<span>현재 내 눈 기준</span></div>
         <div class="scene"><div class="badge good">선명한 시야</div></div>
@@ -632,6 +609,13 @@ function setMode(mode){
   }
   document.querySelectorAll('.optionBtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===mode));
   document.querySelectorAll('.simCard').forEach(card=>card.classList.toggle('active',card.dataset.mode===mode));
+  document.querySelectorAll('.simTabBtn').forEach(btn=>{
+    const isActive=btn.dataset.mode===mode;
+    btn.classList.toggle('active',isActive);
+    if(btn.dataset.mode==='current') btn.textContent=(isActive?'●':'○')+' 내 눈 맞춤';
+    if(btn.dataset.mode==='large') btn.textContent=(isActive?'●':'○')+' 설계가 큼';
+    if(btn.dataset.mode==='small') btn.textContent=(isActive?'●':'○')+' 설계가 작음';
+  });
   drawAnalysis();
 }
 function resetAll(){captured=false;counting=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
@@ -641,7 +625,7 @@ async function startCamera(){
   camera=new Camera(video,{onFrame:async()=>{if(!captured&&faceMesh)await faceMesh.send({image:video})},width:1920,height:1080});camera.start()}catch(e){timerTitle.textContent='카메라 오류';timerText.textContent='카메라 권한을 허용한 뒤 다시 시도해주세요.';countNum.textContent='!'}
 }
 function stopCamera(){if(camera&&camera.stop)camera.stop();camera=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
-retryBtn.addEventListener('click',()=>{ window.location.reload(); });document.querySelectorAll('.optionBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));document.querySelectorAll('.simCard').forEach(card=>card.addEventListener('click',()=>setMode(card.dataset.mode)));startCamera();
+retryBtn.addEventListener('click',()=>{ window.location.reload(); });document.querySelectorAll('.optionBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));document.querySelectorAll('.simCard').forEach(card=>card.addEventListener('click',()=>setMode(card.dataset.mode)));document.querySelectorAll('.simTabBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));startCamera();
 </script>
 </body>
 </html>
