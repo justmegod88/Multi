@@ -92,6 +92,46 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   .ring{width:112px;height:112px;margin:7px auto 11px}.ringInner{width:84px;height:84px;font-size:37px}.timerText{min-height:23px}
   .analysisImage{aspect-ratio:1.05/1}.scene{height:168px}
 }
+
+/* === 176 flow merge: camera/countdown/analysis in one card === */
+.capturePanel.singleFlowPanel{display:block}
+.singleFlowPanel .cameraSide{padding:0 14px 14px}
+.singleFlowPanel .cameraFrame{aspect-ratio:1.45/1;max-height:390px}
+#analysisCanvas{position:absolute;inset:0;width:100%;height:100%;display:none;z-index:3}
+.cameraFrame.captured #analysisCanvas{display:block}
+.cameraFrame.captured #mainCanvas{display:none!important}
+.cameraFrame.captured .faceGuide,
+.cameraFrame.captured #camBadge,
+.cameraFrame.captured #countOverlay{display:none}
+.countOverlay{
+  position:absolute;right:12px;top:12px;z-index:10;
+  width:80px;height:80px;display:grid;place-items:center;
+  background:rgba(255,255,255,.84);border-radius:16px;
+  box-shadow:0 8px 22px rgba(0,0,0,.16);
+}
+.countOverlay .ring{width:68px;height:68px;margin:0}
+.countOverlay .ringInner{width:50px;height:50px;font-size:24px}
+.afterCaptureBar{
+  display:none;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:10px;padding:10px 12px;border-radius:14px;background:#f4f8fd;
+}
+.cameraFrame.captured + .afterCaptureBar{display:flex}
+.completeText{font-weight:950;color:var(--blue);font-size:15px}
+.analysisControls{display:none;padding:0 14px 16px}
+.singleFlowPanel.captured .analysisControls{display:block}
+.mergedOptions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mergedOptions .optionBtn{min-height:76px}
+.singleFlowPanel.captured .panelHead .desc{display:none}
+@media(max-width:900px){
+  .mergedOptions{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .singleFlowPanel .cameraFrame{aspect-ratio:1.18/1;min-height:225px;max-height:285px}
+  .countOverlay{width:70px;height:70px}
+  .countOverlay .ring{width:58px;height:58px}
+  .countOverlay .ringInner{width:43px;height:43px;font-size:21px}
+}
+
 </style>
 </head>
 
@@ -108,45 +148,48 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
     <div class="step" id="step3"><strong>3. 체험</strong><span>시야 차이를 비교합니다.</span></div>
   </section>
 
-  <section class="panel capturePanel">
-    <div>
-      <div class="panelHead"><h2 class="panelTitle"><span class="dot"></span>카메라 ON</h2></div>
-      <div class="cameraSide">
-        <div class="cameraFrame" id="cameraFrame">
-          <video id="video" playsinline autoplay muted></video>
-          <canvas id="mainCanvas"></canvas>
-          <canvas id="liveCanvas"></canvas>
-          <div class="camBadge"><i></i> CAMERA ON</div>
-          <div class="faceGuide"></div>
-          <div class="guideText" id="guideText">양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small></div>
+  <section class="panel capturePanel singleFlowPanel">
+    <div class="panelHead">
+      <h2 class="panelTitle"><span class="dot"></span><span id="capturePanelTitle">카메라 ON</span></h2>
+      <p class="desc" id="timerText">양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.</p>
+    </div>
+
+    <div class="cameraSide">
+      <div class="cameraFrame" id="cameraFrame">
+        <video id="video" playsinline autoplay muted></video>
+        <canvas id="mainCanvas"></canvas>
+        <canvas id="analysisCanvas"></canvas>
+        <canvas id="liveCanvas"></canvas>
+
+        <div class="camBadge" id="camBadge"><i></i> CAMERA ON</div>
+        <div class="faceGuide"></div>
+
+        <div class="countOverlay" id="countOverlay">
+          <div class="ring" id="ring" style="--progress:0deg">
+            <div class="ringInner" id="countNum">-</div>
+          </div>
         </div>
+
+        <div class="guideText" id="guideText">
+          양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.
+          <small>잠시 후 자동으로 촬영됩니다.</small>
+        </div>
+      </div>
+
+      <div class="afterCaptureBar" id="afterCaptureBar">
+        <div class="completeText">분석 완료</div>
+        <button class="retryBtn" id="retryBtn">다시 촬영</button>
       </div>
     </div>
 
-    <aside class="timerSide">
-      <div class="timerTitle">📷 <span id="timerTitle">촬영 준비 중</span></div>
-      <div class="timerText" id="timerText">양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.</div>
-      <div class="ring" id="ring" style="--progress:0deg"><div class="ringInner" id="countNum">-</div></div>
-      <button class="retryBtn" id="retryBtn">다시 촬영</button>
-    </aside>
-  </section>
+    <div class="analysisControls" id="analysisControls">
+      <div class="legendMini">
+        <div><span class="iconCircle iris"></span>외곽 기준</div>
+        <div><span class="iconCircle pupil"></span>동공</div>
+        <div><span class="iconCircle optic"></span>렌즈 중심 설계</div>
+      </div>
 
-  <section class="panel">
-    <div class="panelHead">
-      <h2 class="panelTitle"><span class="dot"></span>내 눈 기준 분석</h2>
-      <p class="desc">촬영된 눈을 크게 확대해 내 눈과 렌즈 디자인의 관계를 보여줍니다.</p>
-    </div>
-
-    <div class="analysisBody">
-      <div class="analysisImage"><canvas id="analysisCanvas"></canvas></div>
-
-      <aside class="optionPanel">
-        <div class="legendMini">
-          <div><span class="iconCircle iris"></span>외곽 기준</div>
-          <div><span class="iconCircle pupil"></span>동공</div>
-          <div><span class="iconCircle optic"></span>렌즈 중심 설계</div>
-        </div>
-
+      <div class="optionPanel mergedOptions">
         <button class="optionBtn current active" data-mode="current">
           <span class="radioIcon"></span><div><strong>① 내 눈에 맞는 설계</strong><span>선명한 시야</span></div>
         </button>
@@ -156,8 +199,10 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
         <button class="optionBtn small" data-mode="small">
           <span class="radioIcon"></span><div><strong>③ 설계가 더 작은 경우</strong><span>주변부 흐림</span></div>
         </button>
-      </aside>
+      </div>
     </div>
+
+    <div id="timerTitle" style="display:none">촬영 준비 중</div>
   </section>
 
   <section class="panel">
@@ -254,7 +299,7 @@ function startCountdown(){
 }
 function cancelCountdown(){clearInterval(countdownTimer);counting=false;countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 보이도록 다시 맞춰주세요.';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>'}
 function captureFace(){
-  if(!latestFace||!video.videoWidth)return;captured=true;setStep(2);timerTitle.textContent='분석 완료';timerText.textContent='한쪽 눈을 크게 확대해 내 눈 기준으로 분석했습니다.';countNum.textContent='✓';ring.style.setProperty('--progress','360deg');cameraFrame.classList.add('captured');guideText.style.display='none';
+  if(!latestFace||!video.videoWidth)return;captured=true;setStep(2);timerTitle.textContent='분석 완료';timerText.textContent='한쪽 눈을 크게 확대해 내 눈 기준으로 분석했습니다.';countNum.textContent='✓';ring.style.setProperty('--progress','360deg');cameraFrame.classList.add('captured');document.querySelector('.singleFlowPanel')?.classList.add('captured');document.getElementById('capturePanelTitle').textContent='분석 완료';guideText.style.display='none';
   const w=video.videoWidth,h=video.videoHeight,left=latestFace.left,right=latestFace.right,cx=(left.cx+right.cx)/2,cy=(left.cy+right.cy)/2,cropW=Math.min(w,Math.max(latestFace.eyeDistance*2.8,520)),cropH=cropW*.58;
   let sx=Math.max(0,cx-cropW/2),sy=Math.max(0,cy-cropH/2);if(sx+cropW>w)sx=w-cropW;if(sy+cropH>h)sy=h-cropH;sx=Math.max(0,sx);sy=Math.max(0,sy);
   mainCanvas.width=1000;mainCanvas.height=580;const cctx=mainCanvas.getContext('2d');cctx.save();cctx.scale(-1,1);cctx.drawImage(video,sx,sy,cropW,cropH,-mainCanvas.width,0,mainCanvas.width,mainCanvas.height);cctx.restore();
@@ -263,7 +308,7 @@ function captureFace(){
 
   // 약 9배 확대 느낌: 너무 과확대하면 화질이 깨져서 iris 반경 기준으로 안정적 crop
   const singleW=Math.max(irisInfo.r*3.25,110);
-  const singleH=singleW*.86;
+  const singleH=singleW;
   let esx=Math.max(0,irisInfo.x-singleW/2),esy=Math.max(0,irisInfo.y-singleH/2);
   if(esx+singleW>w)esx=w-singleW;
   if(esy+singleH>h)esy=h-singleH;
@@ -272,28 +317,28 @@ function captureFace(){
   // 버튼 클릭 시 영상이 멈춰도 캡처 이미지는 계속 유지되도록 별도 canvas에 저장
   eyeSourceCanvas=document.createElement('canvas');
   eyeSourceCanvas.width=1000;
-  eyeSourceCanvas.height=800;
+  eyeSourceCanvas.height=1000;
   const ectx=eyeSourceCanvas.getContext('2d');
   ectx.save();
   ectx.scale(-1,1);
   ectx.filter='contrast(1.08) saturate(1.05)';
-  ectx.drawImage(video,esx,esy,singleW,singleH,-1000,0,1000,800);
+  ectx.drawImage(video,esx,esy,singleW,singleH,-1000,0,1000,1000);
   ectx.restore();
 
   cropMeta={esx,esy,singleW,singleH,target,irisInfo};
   drawAnalysis();stopCamera();setStep(3);
 }
 function drawAnalysis(){
-  if(!cropMeta || !eyeSourceCanvas)return;const{esx,esy,singleW,singleH,target,irisInfo}=cropMeta;analysisCanvas.width=1000;analysisCanvas.height=800;const ctx=analysisCanvas.getContext('2d');
-  ctx.clearRect(0,0,1000,800);
-  ctx.drawImage(eyeSourceCanvas,0,0,1000,800);
+  if(!cropMeta || !eyeSourceCanvas)return;const{esx,esy,singleW,singleH,target,irisInfo}=cropMeta;analysisCanvas.width=1000;analysisCanvas.height=1000;const ctx=analysisCanvas.getContext('2d');
+  ctx.clearRect(0,0,1000,1000);
+  ctx.drawImage(eyeSourceCanvas,0,0,1000,1000);
 
   // iris landmark 중심 기준: 파란 외곽/동공/렌즈 중심 설계가 같은 중심을 공유
-  const ex=1000-((irisInfo.x-esx)/singleW*1000),ey=((irisInfo.y-esy)/singleH*800);
+  const ex=1000-((irisInfo.x-esx)/singleW*1000),ey=((irisInfo.y-esy)/singleH*1000);
   const irisR=Math.max(175,irisInfo.r/singleW*1000);
   const pupilR=getApproxPupilRadiusFromIris(irisR);
   let opticR=pupilR,opticColor=varColor('--green');if(selectedMode==='large'){opticR=pupilR*1.72;opticColor=varColor('--orange')}else if(selectedMode==='small'){opticR=pupilR*.72;opticColor=varColor('--red')}
-  ctx.save();ctx.strokeStyle='rgba(255,255,255,.74)';ctx.setLineDash([8,7]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,ey);ctx.lineTo(1000,ey);ctx.moveTo(ex,0);ctx.lineTo(ex,800);ctx.stroke();ctx.setLineDash([]);
+  ctx.save();ctx.strokeStyle='rgba(255,255,255,.74)';ctx.setLineDash([8,7]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,ey);ctx.lineTo(1000,ey);ctx.moveTo(ex,0);ctx.lineTo(ex,1000);ctx.stroke();ctx.setLineDash([]);
   ctx.strokeStyle=varColor('--blue');ctx.lineWidth=5;ctx.setLineDash([14,8]);ctx.beginPath();ctx.arc(ex,ey,irisR,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
   ctx.strokeStyle='#111';ctx.lineWidth=5;ctx.beginPath();ctx.arc(ex,ey,pupilR,0,Math.PI*2);ctx.stroke();
   ctx.strokeStyle=opticColor;ctx.lineWidth=7;ctx.beginPath();ctx.arc(ex,ey,opticR,0,Math.PI*2);ctx.stroke();
@@ -301,7 +346,7 @@ function drawAnalysis(){
 }
 function varColor(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function setMode(mode){selectedMode=mode;document.querySelectorAll('.optionBtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===mode));document.querySelectorAll('.simCard').forEach(card=>card.classList.toggle('active',card.dataset.mode===mode));drawAnalysis()}
-function resetAll(){captured=false;counting=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
+function resetAll(){captured=false;counting=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
 async function startCamera(){
   try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});video.srcObject=stream;await video.play();
   faceMesh=new FaceMesh({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});faceMesh.onResults(onResults);
