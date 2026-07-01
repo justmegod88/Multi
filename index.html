@@ -267,7 +267,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   flex:0 0 20px;
 }
 .irisLegend{border:2.5px dashed var(--blue)}
-.pupilLegend{border:2.5px solid #111}
+.pupilLegend{border:3.5px solid #111}
 .opticLegend{border:2.5px solid var(--green)}
 .singleFlowPanel.mode-current .opticLegend{border-color:var(--green)}
 .singleFlowPanel.mode-large .opticLegend{border-color:var(--orange)}
@@ -393,6 +393,10 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   }
 }
 
+/* === hide optical-zone guide until user selects vision option === */
+.analysisLegendOverlay .opticGuideItem{display:none!important}
+.singleFlowPanel.analysis-design-visible .analysisLegendOverlay .opticGuideItem{display:flex!important}
+
 </style>
 </head>
 
@@ -432,7 +436,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
         <div class="analysisLegendOverlay" id="analysisLegendOverlay">
           <div><span class="legendCircle irisLegend"></span>외곽 기준</div>
           <div><span class="legendCircle pupilLegend"></span>동공</div>
-          <div><span class="legendCircle opticLegend"></span>도수영역(광학부)</div>
+          <div class="opticGuideItem"><span class="legendCircle opticLegend"></span>도수영역(광학부)</div>
         </div>
 
         <div class="guideText" id="guideText">
@@ -610,7 +614,7 @@ function drawAnalysis(){
   let opticR=pupilR,opticColor=varColor('--green');if(selectedMode==='large'){opticR=pupilR*1.72;opticColor=varColor('--orange')}else if(selectedMode==='small'){opticR=pupilR*.72;opticColor=varColor('--red')}
   ctx.save();ctx.strokeStyle='rgba(255,255,255,.74)';ctx.setLineDash([8,7]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,ey);ctx.lineTo(1000,ey);ctx.moveTo(ex,0);ctx.lineTo(ex,1000);ctx.stroke();ctx.setLineDash([]);
   ctx.strokeStyle=varColor('--blue');ctx.lineWidth=5;ctx.setLineDash([14,8]);ctx.beginPath();ctx.arc(ex,ey,irisR,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-  ctx.strokeStyle='#111';ctx.lineWidth=5;ctx.beginPath();ctx.arc(ex,ey,pupilR,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='#111';ctx.lineWidth=8;ctx.beginPath();ctx.arc(ex,ey,pupilR,0,Math.PI*2);ctx.stroke();
   if(analysisDesignVisible){
     ctx.strokeStyle=opticColor;ctx.lineWidth=7;ctx.beginPath();ctx.arc(ex,ey,opticR,0,Math.PI*2);ctx.stroke();
     ctx.fillStyle=opticColor;[[ex,ey-opticR],[ex,ey+opticR],[ex-opticR,ey],[ex+opticR,ey]].forEach(p=>{ctx.beginPath();ctx.arc(p[0],p[1],8,0,Math.PI*2);ctx.fill()});
@@ -624,7 +628,7 @@ function setMode(mode){
   const panel=document.querySelector('.singleFlowPanel');
   if(panel){
     panel.classList.remove('mode-current','mode-large','mode-small');
-    panel.classList.add('mode-'+mode);
+    panel.classList.add('mode-'+mode,'analysis-design-visible');
   }
   document.querySelectorAll('.optionBtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===mode));
   document.querySelectorAll('.simCard').forEach(card=>card.classList.toggle('active',card.dataset.mode===mode));
@@ -637,7 +641,7 @@ function setMode(mode){
   });
   drawAnalysis();
 }
-function resetAll(){captured=false;counting=false;analysisDesignVisible=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
+function resetAll(){captured=false;counting=false;analysisDesignVisible=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small','analysis-design-visible');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
 async function startCamera(){
   try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});video.srcObject=stream;await video.play();
   faceMesh=new FaceMesh({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});faceMesh.onResults(onResults);
