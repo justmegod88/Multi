@@ -90,7 +90,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   .wrap{padding:10px 8px 22px}.steps{gap:6px}.step{min-height:52px;padding:7px 5px}.step strong{font-size:12px}.step span{display:none}
   .cameraFrame{aspect-ratio:1.18/1;min-height:225px;max-height:285px}.timerSide{padding:11px 14px}
   .ring{width:112px;height:112px;margin:7px auto 11px}.ringInner{width:84px;height:84px;font-size:37px}.timerText{min-height:23px}
-  .analysisImage{aspect-ratio:1.05/1}.scene{height:168px}
+  .analysisImage{aspect-ratio:1/1}.scene{height:168px}
 }
 </style>
 </head>
@@ -142,7 +142,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 
       <aside class="optionPanel">
         <div class="legendMini">
-          <div><span class="iconCircle iris"></span>외곽 기준</div>
+          <div><span class="iconCircle iris"></span>홍채</div>
           <div><span class="iconCircle pupil"></span>동공</div>
           <div><span class="iconCircle optic"></span>렌즈 중심 설계</div>
         </div>
@@ -193,40 +193,9 @@ const video=document.getElementById('video'), cameraFrame=document.getElementByI
 const timerTitle=document.getElementById('timerTitle'), timerText=document.getElementById('timerText'), countNum=document.getElementById('countNum'), ring=document.getElementById('ring'), retryBtn=document.getElementById('retryBtn'), guideText=document.getElementById('guideText');
 const step1=document.getElementById('step1'), step2=document.getElementById('step2'), step3=document.getElementById('step3');
 
-let stream=null, faceMesh=null, camera=null, counting=false, captured=false, countdownTimer=null, latestFace=null, selectedMode='current', cropMeta=null, eyeSourceCanvas=null;
+let stream=null, faceMesh=null, camera=null, counting=false, captured=false, countdownTimer=null, latestFace=null, selectedMode='current', cropMeta=null;
 const FACE_OVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
 const LEFT_EYE=[33,133,159,145,160,144,158,153], RIGHT_EYE=[362,263,386,374,385,380,387,373];
-
-
-function getIrisInfo(lm,target,w,h){
-  // MediaPipe FaceMesh refineLandmarks=true 일 때
-  // 468~472 / 473~477 iris landmark를 사용해서 실제 홍채 중심을 잡습니다.
-  const irisGroups=[
-    [468,469,470,471,472],
-    [473,474,475,476,477]
-  ];
-  let best=null;
-  irisGroups.forEach(group=>{
-    if(!lm[group[0]] || !lm[group[1]]) return;
-    const center={x:lm[group[0]].x*w,y:lm[group[0]].y*h};
-    const pts=group.slice(1).map(id=>({x:lm[id].x*w,y:lm[id].y*h}));
-    const radius=pts.reduce((sum,p)=>sum+Math.hypot(p.x-center.x,p.y-center.y),0)/Math.max(1,pts.length);
-    const distToTarget=Math.hypot(center.x-target.cx,center.y-target.cy);
-    if(!best || distToTarget<best.distToTarget){
-      best={x:center.x,y:center.y,r:radius,distToTarget};
-    }
-  });
-
-  // landmark가 실패하면 기존 눈 박스 기준으로 fallback
-  if(best && best.r>2) return best;
-  return {x:target.cx,y:target.cy,r:Math.max(6,target.width*.22)};
-}
-
-function getApproxPupilRadiusFromIris(irisR){
-  // 웹 카메라에서 동공 경계는 반사광 때문에 불안정하므로,
-  // iris landmark 중심을 기준으로 동공은 홍채 대비 보수적 비율로 표시합니다.
-  return irisR*.34;
-}
 
 function setStep(n){[step1,step2,step3].forEach((el,i)=>el.classList.toggle('active',i+1<=n))}
 function boxFrom(lm,ids,w,h){let xs=[],ys=[];ids.forEach(id=>{xs.push(lm[id].x*w);ys.push(lm[id].y*h)});return{x1:Math.min(...xs),x2:Math.max(...xs),y1:Math.min(...ys),y2:Math.max(...ys),cx:(Math.min(...xs)+Math.max(...xs))/2,cy:(Math.min(...ys)+Math.max(...ys))/2,width:Math.max(...xs)-Math.min(...xs),height:Math.max(...ys)-Math.min(...ys)}}
@@ -240,7 +209,7 @@ function drawLive(lm){
 }
 function faceFillRatio(lm){
   const w=video.videoWidth||1280,h=video.videoHeight||720,face=boxFrom(lm,FACE_OVAL,w,h),left=boxFrom(lm,LEFT_EYE,w,h),right=boxFrom(lm,RIGHT_EYE,w,h);
-  const eyeDistance=Math.abs(right.cx-left.cx)+(left.width+right.width)/2;latestFace={face,left,right,eyeDistance,lm};return Math.min(1,eyeDistance/(w*.38));
+  const eyeDistance=Math.abs(right.cx-left.cx)+(left.width+right.width)/2;latestFace={face,left,right,eyeDistance};return Math.min(1,eyeDistance/(w*.38));
 }
 function onResults(results){
   if(captured)return;const lm=results.multiFaceLandmarks&&results.multiFaceLandmarks[0];
@@ -258,40 +227,13 @@ function captureFace(){
   const w=video.videoWidth,h=video.videoHeight,left=latestFace.left,right=latestFace.right,cx=(left.cx+right.cx)/2,cy=(left.cy+right.cy)/2,cropW=Math.min(w,Math.max(latestFace.eyeDistance*2.8,520)),cropH=cropW*.58;
   let sx=Math.max(0,cx-cropW/2),sy=Math.max(0,cy-cropH/2);if(sx+cropW>w)sx=w-cropW;if(sy+cropH>h)sy=h-cropH;sx=Math.max(0,sx);sy=Math.max(0,sy);
   mainCanvas.width=1000;mainCanvas.height=580;const cctx=mainCanvas.getContext('2d');cctx.save();cctx.scale(-1,1);cctx.drawImage(video,sx,sy,cropW,cropH,-mainCanvas.width,0,mainCanvas.width,mainCanvas.height);cctx.restore();
-  const target=right;
-  const irisInfo=getIrisInfo(latestFace.lm,target,w,h);
-
-  // 약 9배 확대 느낌: 너무 과확대하면 화질이 깨져서 iris 반경 기준으로 안정적 crop
-  const singleW=Math.max(irisInfo.r*3.25,110);
-  const singleH=singleW*.86;
-  let esx=Math.max(0,irisInfo.x-singleW/2),esy=Math.max(0,irisInfo.y-singleH/2);
-  if(esx+singleW>w)esx=w-singleW;
-  if(esy+singleH>h)esy=h-singleH;
-  esx=Math.max(0,esx);esy=Math.max(0,esy);
-
-  // 버튼 클릭 시 영상이 멈춰도 캡처 이미지는 계속 유지되도록 별도 canvas에 저장
-  eyeSourceCanvas=document.createElement('canvas');
-  eyeSourceCanvas.width=1000;
-  eyeSourceCanvas.height=800;
-  const ectx=eyeSourceCanvas.getContext('2d');
-  ectx.save();
-  ectx.scale(-1,1);
-  ectx.filter='contrast(1.08) saturate(1.05)';
-  ectx.drawImage(video,esx,esy,singleW,singleH,-1000,0,1000,800);
-  ectx.restore();
-
-  cropMeta={esx,esy,singleW,singleH,target,irisInfo};
-  drawAnalysis();stopCamera();setStep(3);
+  const target=right,singleW=Math.max(target.width*2.4,target.height*4.8,120),singleH=singleW*.90;let esx=Math.max(0,target.cx-singleW/2),esy=Math.max(0,target.cy-singleH/2);if(esx+singleW>w)esx=w-singleW;if(esy+singleH>h)esy=h-singleH;esx=Math.max(0,esx);esy=Math.max(0,esy);
+  cropMeta={esx,esy,singleW,singleH,target};drawAnalysis();stopCamera();setStep(3);
 }
 function drawAnalysis(){
-  if(!cropMeta || !eyeSourceCanvas)return;const{esx,esy,singleW,singleH,target,irisInfo}=cropMeta;analysisCanvas.width=1000;analysisCanvas.height=800;const ctx=analysisCanvas.getContext('2d');
-  ctx.clearRect(0,0,1000,800);
-  ctx.drawImage(eyeSourceCanvas,0,0,1000,800);
-
-  // iris landmark 중심 기준: 파란 외곽/동공/렌즈 중심 설계가 같은 중심을 공유
-  const ex=1000-((irisInfo.x-esx)/singleW*1000),ey=((irisInfo.y-esy)/singleH*800);
-  const irisR=Math.max(175,irisInfo.r/singleW*1000);
-  const pupilR=getApproxPupilRadiusFromIris(irisR);
+  if(!cropMeta)return;const{esx,esy,singleW,singleH,target}=cropMeta;analysisCanvas.width=1000;analysisCanvas.height=800;const ctx=analysisCanvas.getContext('2d');
+  ctx.save();ctx.scale(-1,1);ctx.drawImage(video,esx,esy,singleW,singleH,-1000,0,1000,800);ctx.restore();
+  const ex=1000-((target.cx-esx)/singleW*1000),ey=((target.cy-esy)/singleH*800),irisR=Math.max(235,target.width/singleW*1000*.58),pupilR=irisR*.30;
   let opticR=pupilR,opticColor=varColor('--green');if(selectedMode==='large'){opticR=pupilR*1.72;opticColor=varColor('--orange')}else if(selectedMode==='small'){opticR=pupilR*.72;opticColor=varColor('--red')}
   ctx.save();ctx.strokeStyle='rgba(255,255,255,.74)';ctx.setLineDash([8,7]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,ey);ctx.lineTo(1000,ey);ctx.moveTo(ex,0);ctx.lineTo(ex,800);ctx.stroke();ctx.setLineDash([]);
   ctx.strokeStyle=varColor('--blue');ctx.lineWidth=5;ctx.setLineDash([14,8]);ctx.beginPath();ctx.arc(ex,ey,irisR,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
@@ -301,11 +243,11 @@ function drawAnalysis(){
 }
 function varColor(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function setMode(mode){selectedMode=mode;document.querySelectorAll('.optionBtn').forEach(btn=>btn.classList.toggle('active',btn.dataset.mode===mode));document.querySelectorAll('.simCard').forEach(card=>card.classList.toggle('active',card.dataset.mode===mode));drawAnalysis()}
-function resetAll(){captured=false;counting=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
+function resetAll(){captured=false;counting=false;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
 async function startCamera(){
   try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});video.srcObject=stream;await video.play();
   faceMesh=new FaceMesh({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});faceMesh.onResults(onResults);
-  camera=new Camera(video,{onFrame:async()=>{if(!captured&&faceMesh)await faceMesh.send({image:video})},width:1920,height:1080});camera.start()}catch(e){timerTitle.textContent='카메라 오류';timerText.textContent='카메라 권한을 허용한 뒤 다시 시도해주세요.';countNum.textContent='!'}
+  camera=new Camera(video,{onFrame:async()=>{if(!captured&&faceMesh)await faceMesh.send({image:video})},width:1280,height:720});camera.start()}catch(e){timerTitle.textContent='카메라 오류';timerText.textContent='카메라 권한을 허용한 뒤 다시 시도해주세요.';countNum.textContent='!'}
 }
 function stopCamera(){if(camera&&camera.stop)camera.stop();camera=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
 retryBtn.addEventListener('click',resetAll);document.querySelectorAll('.optionBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));document.querySelectorAll('.simCard').forEach(card=>card.addEventListener('click',()=>setMode(card.dataset.mode)));startCamera();
