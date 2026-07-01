@@ -497,14 +497,14 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   <section class="panel">
     <div class="panelHead">
       <h2 class="panelTitle"><span class="dot"></span>시야 체험</h2>
-      <p class="desc"> 검은동자 크기와 잘 맞는 도수영역은 선명한 시야를 제공합니다.</p>
+      <p class="desc"> 동공크기와 광학부 크기가 잘 맞아야 시야가 선명합니다.</p>
     </div>
 
     <div class="simGrid">
       <div class="simTabs">
-        <button class="simTabBtn active current" data-mode="current">● 검은동자=도수영역</button>
-        <button class="simTabBtn large" data-mode="large">○ 검은동자&lt;도수영역</button>
-        <button class="simTabBtn small" data-mode="small">○ 검은동자&gt;도수영역</button>
+        <button class="simTabBtn active current" data-mode="current">● 동공=광학부</button>
+        <button class="simTabBtn large" data-mode="large">○ 큰 광학부</button>
+        <button class="simTabBtn small" data-mode="small">○ 작은 광학부</button>
       </div>
 
       <div class="simCard active current" data-mode="current">
@@ -663,9 +663,9 @@ function setMode(mode){
   document.querySelectorAll('.simTabBtn').forEach(btn=>{
     const isActive=btn.dataset.mode===mode;
     btn.classList.toggle('active',isActive);
-    if(btn.dataset.mode==='current') btn.textContent=(isActive?'●':'○')+' 동공=도수영역';
-    if(btn.dataset.mode==='large') btn.textContent=(isActive?'●':'○')+' 동공<도수영역';
-    if(btn.dataset.mode==='small') btn.textContent=(isActive?'●':'○')+' 동공>도수영역';
+    if(btn.dataset.mode==='current') btn.textContent=(isActive?'●':'○')+' 동공=광학부';
+    if(btn.dataset.mode==='large') btn.textContent=(isActive?'●':'○')+' 큰 광학부';
+    if(btn.dataset.mode==='small') btn.textContent=(isActive?'●':'○')+' 작은 광학부';
   });
   drawAnalysis();
 }
