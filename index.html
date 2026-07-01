@@ -508,7 +508,7 @@ const video=document.getElementById('video'), cameraFrame=document.getElementByI
 const timerTitle=document.getElementById('timerTitle'), timerText=document.getElementById('timerText'), countNum=document.getElementById('countNum'), ring=document.getElementById('ring'), retryBtn=document.getElementById('retryBtn'), guideText=document.getElementById('guideText');
 const step1=document.getElementById('step1'), step2=document.getElementById('step2'), step3=document.getElementById('step3');
 
-let stream=null, faceMesh=null, camera=null, counting=false, captured=false, countdownTimer=null, latestFace=null, selectedMode='current', cropMeta=null, eyeSourceCanvas=null;
+let stream=null, faceMesh=null, camera=null, counting=false, captured=false, countdownTimer=null, latestFace=null, selectedMode='current', analysisDesignVisible=false, cropMeta=null, eyeSourceCanvas=null;
 const FACE_OVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
 const LEFT_EYE=[33,133,159,145,160,144,158,153], RIGHT_EYE=[362,263,386,374,385,380,387,373];
 
@@ -611,12 +611,16 @@ function drawAnalysis(){
   ctx.save();ctx.strokeStyle='rgba(255,255,255,.74)';ctx.setLineDash([8,7]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,ey);ctx.lineTo(1000,ey);ctx.moveTo(ex,0);ctx.lineTo(ex,1000);ctx.stroke();ctx.setLineDash([]);
   ctx.strokeStyle=varColor('--blue');ctx.lineWidth=5;ctx.setLineDash([14,8]);ctx.beginPath();ctx.arc(ex,ey,irisR,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
   ctx.strokeStyle='#111';ctx.lineWidth=5;ctx.beginPath();ctx.arc(ex,ey,pupilR,0,Math.PI*2);ctx.stroke();
-  ctx.strokeStyle=opticColor;ctx.lineWidth=7;ctx.beginPath();ctx.arc(ex,ey,opticR,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle=opticColor;[[ex,ey-opticR],[ex,ey+opticR],[ex-opticR,ey],[ex+opticR,ey]].forEach(p=>{ctx.beginPath();ctx.arc(p[0],p[1],8,0,Math.PI*2);ctx.fill()});ctx.restore();
+  if(analysisDesignVisible){
+    ctx.strokeStyle=opticColor;ctx.lineWidth=7;ctx.beginPath();ctx.arc(ex,ey,opticR,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle=opticColor;[[ex,ey-opticR],[ex,ey+opticR],[ex-opticR,ey],[ex+opticR,ey]].forEach(p=>{ctx.beginPath();ctx.arc(p[0],p[1],8,0,Math.PI*2);ctx.fill()});
+  }
+  ctx.restore();
 }
 function varColor(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function setMode(mode){
   selectedMode=mode;
+  analysisDesignVisible=true;
   const panel=document.querySelector('.singleFlowPanel');
   if(panel){
     panel.classList.remove('mode-current','mode-large','mode-small');
@@ -633,7 +637,7 @@ function setMode(mode){
   });
   drawAnalysis();
 }
-function resetAll(){captured=false;counting=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
+function resetAll(){captured=false;counting=false;analysisDesignVisible=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='양 눈이 화면 중앙에 오도록 정면을 바라봐 주세요.<small>잠시 후 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
 async function startCamera(){
   try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});video.srcObject=stream;await video.play();
   faceMesh=new FaceMesh({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});faceMesh.onResults(onResults);
