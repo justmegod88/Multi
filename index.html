@@ -132,6 +132,76 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   .countOverlay .ringInner{width:43px;height:43px;font-size:21px}
 }
 
+
+/* === requested UI tweaks === */
+.cameraTitle{gap:10px}
+.cameraRedDot{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#c32235;
+  display:inline-block;
+  flex:0 0 24px;
+}
+.countOverlay{
+  right:14px!important;
+  top:14px!important;
+  width:auto!important;
+  height:auto!important;
+  background:transparent!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+.countOverlay .ring{
+  width:76px!important;
+  height:76px!important;
+  margin:0!important;
+  background:conic-gradient(var(--blue) var(--progress,0deg),rgba(255,255,255,.62) 0deg)!important;
+  box-shadow:0 4px 12px rgba(0,0,0,.20);
+}
+.countOverlay .ringInner{
+  width:54px!important;
+  height:54px!important;
+  font-size:26px!important;
+  background:rgba(255,255,255,.95)!important;
+}
+.cameraFrame.captured + .afterCaptureBar{
+  display:block!important;
+  position:absolute;
+  right:26px;
+  top:74px;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  z-index:20;
+}
+.cameraSide{position:relative}
+.imageRetryBtn{
+  width:auto!important;
+  min-width:96px;
+  height:38px!important;
+  padding:0 16px;
+  border-radius:10px!important;
+  background:var(--blue)!important;
+  color:#fff!important;
+  box-shadow:0 8px 18px rgba(0,94,184,.20);
+}
+.completeText{display:none!important}
+.camBadge{display:none!important}
+.cameraFrame.captured .guideText{display:none!important}
+@media(max-width:560px){
+  .cameraRedDot{width:18px;height:18px;flex-basis:18px}
+  .countOverlay{right:10px!important;top:10px!important}
+  .countOverlay .ring{width:62px!important;height:62px!important}
+  .countOverlay .ringInner{width:44px!important;height:44px!important;font-size:22px!important}
+  .cameraFrame.captured + .afterCaptureBar{
+    right:20px;
+    top:62px;
+  }
+  .imageRetryBtn{height:34px!important;min-width:82px;font-size:13px}
+}
+
 </style>
 </head>
 
@@ -150,7 +220,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 
   <section class="panel capturePanel singleFlowPanel">
     <div class="panelHead">
-      <h2 class="panelTitle"><span class="dot"></span><span id="capturePanelTitle">카메라 ON</span></h2>
+      <h2 class="panelTitle cameraTitle"><span class="cameraRedDot"></span><span id="capturePanelTitle">카메라 ON</span></h2>
       <p class="desc" id="timerText">양 눈이 잘 보이면 3초 카운트다운이 시작됩니다.</p>
     </div>
 
@@ -160,8 +230,6 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
         <canvas id="mainCanvas"></canvas>
         <canvas id="analysisCanvas"></canvas>
         <canvas id="liveCanvas"></canvas>
-
-        <div class="camBadge" id="camBadge"><i></i> CAMERA ON</div>
         <div class="faceGuide"></div>
 
         <div class="countOverlay" id="countOverlay">
@@ -177,8 +245,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
       </div>
 
       <div class="afterCaptureBar" id="afterCaptureBar">
-        <div class="completeText">분석 완료</div>
-        <button class="retryBtn" id="retryBtn">다시 촬영</button>
+        <button class="retryBtn imageRetryBtn" id="retryBtn">재촬영</button>
       </div>
     </div>
 
