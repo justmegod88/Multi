@@ -318,6 +318,95 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   .countOverlay .ringInner{width:44px!important;height:44px!important;font-size:22px!important}
 }
 
+
+/* === 177 mobile vision section refinements === */
+/* 재촬영 버튼: 분석 이미지 위가 아니라 패널 외부 우측 상단 */
+.singleFlowPanel .cameraSide{position:static!important}
+.singleFlowPanel.captured .panelHead{padding-right:132px!important}
+.cameraFrame.captured + .afterCaptureBar{
+  position:absolute!important;
+  right:14px!important;
+  top:12px!important;
+  z-index:60!important;
+}
+
+/* 모바일 전용: 좌측은 선택 버튼, 우측은 선택된 시야 이미지 1장만 */
+@media(max-width:560px){
+  .visionPanel .panelHead{padding:14px 14px 8px}
+  .visionPanel .desc{font-size:12px;line-height:1.45}
+  .visionPanel .simGrid{
+    display:grid!important;
+    grid-template-columns:34% 66%;
+    grid-template-rows:repeat(3,auto);
+    gap:8px 8px;
+    padding:0 8px 12px;
+    align-items:stretch;
+  }
+  .visionPanel .simCard{
+    display:contents!important;
+    border:0!important;
+    background:transparent!important;
+    overflow:visible!important;
+  }
+  .visionPanel .simTop{
+    grid-column:1;
+    min-height:64px;
+    height:64px;
+    padding:8px 6px;
+    border:1.5px solid var(--line);
+    border-radius:14px;
+    background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    font-size:12px;
+    line-height:1.18;
+    letter-spacing:-.04em;
+  }
+  .visionPanel .simTop span{
+    margin-top:4px;
+    font-size:10px;
+    line-height:1.2;
+  }
+  .visionPanel .simCard.current .simTop{grid-row:1}
+  .visionPanel .simCard.large .simTop{grid-row:2}
+  .visionPanel .simCard.small .simTop{grid-row:3}
+  .visionPanel .simCard.active.current .simTop{border-color:var(--green);background:#fbfffc}
+  .visionPanel .simCard.active.large .simTop{border-color:var(--orange);background:#fffaf2}
+  .visionPanel .simCard.active.small .simTop{border-color:var(--red);background:#fff7f7}
+
+  .visionPanel .scene{
+    display:none;
+    grid-column:2;
+    grid-row:1 / span 3;
+    height:208px;
+    min-height:208px;
+    border:1.5px solid var(--line);
+    border-radius:16px;
+  }
+  .visionPanel .simCard.active .scene{display:block}
+  .visionPanel .simDesc{display:none!important}
+  .visionPanel .badge{
+    bottom:12px;
+    font-size:11px;
+    padding:7px 10px;
+  }
+  .visionPanel .foot{
+    margin:0 8px 12px;
+    padding:9px 10px;
+    font-size:11px;
+    text-align:left;
+  }
+}
+@media(max-width:390px){
+  .visionPanel .simGrid{grid-template-columns:36% 64%;gap:7px}
+  .visionPanel .simTop{font-size:11px;height:62px;min-height:62px}
+  .visionPanel .simTop span{font-size:9.5px}
+  .visionPanel .scene{height:200px;min-height:200px}
+}
+
 </style>
 </head>
 
@@ -394,7 +483,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
     <div id="timerTitle" style="display:none">촬영 준비 중</div>
   </section>
 
-  <section class="panel">
+  <section class="panel visionPanel">
     <div class="panelHead">
       <h2 class="panelTitle"><span class="dot"></span>시야 체험</h2>
       <p class="desc">아래 옵션을 선택하면 렌즈 디자인 차이에 따른 시야 느낌을 비교할 수 있습니다.</p>
