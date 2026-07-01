@@ -397,6 +397,27 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 .analysisLegendOverlay .opticGuideItem{display:none!important}
 .singleFlowPanel.analysis-design-visible .analysisLegendOverlay .opticGuideItem{display:flex!important}
 
+
+
+/* === final request: remove built-in vision image effects, keep only subtle peripheral blur for 동공>도수영역 === */
+.simCard.current .scene::after,
+.simCard.large .scene::after{
+  opacity:0!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  background:none!important;
+  mask-image:none!important;
+  -webkit-mask-image:none!important;
+}
+.simCard.small .scene::after{
+  opacity:1!important;
+  backdrop-filter:blur(1.6px)!important;
+  -webkit-backdrop-filter:blur(1.6px)!important;
+  background:radial-gradient(circle at 50% 50%, transparent 0 56%, rgba(0,0,0,.10) 74%, rgba(0,0,0,.18) 100%)!important;
+  mask-image:radial-gradient(circle at 50% 50%, transparent 0 56%, rgba(0,0,0,.35) 74%, #000 100%)!important;
+  -webkit-mask-image:radial-gradient(circle at 50% 50%, transparent 0 56%, rgba(0,0,0,.35) 74%, #000 100%)!important;
+}
+
 </style>
 </head>
 
@@ -614,16 +635,6 @@ function drawAnalysis(){
   let opticR=pupilR,opticColor=varColor('--green');if(selectedMode==='large'){opticR=pupilR*1.72;opticColor=varColor('--orange')}else if(selectedMode==='small'){opticR=pupilR*.72;opticColor=varColor('--red')}
   ctx.save();ctx.strokeStyle='rgba(255,255,255,.74)';ctx.setLineDash([8,7]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,ey);ctx.lineTo(1000,ey);ctx.moveTo(ex,0);ctx.lineTo(ex,1000);ctx.stroke();ctx.setLineDash([]);
   ctx.strokeStyle=varColor('--blue');ctx.lineWidth=5;ctx.setLineDash([14,8]);ctx.beginPath();ctx.arc(ex,ey,irisR,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-  ctx.save();
-  const pupilGrad=ctx.createRadialGradient(ex,ey,Math.max(1,pupilR*.18),ex,ey,pupilR);
-  pupilGrad.addColorStop(0,'rgba(0,0,0,.20)');
-  pupilGrad.addColorStop(.65,'rgba(0,0,0,.13)');
-  pupilGrad.addColorStop(1,'rgba(0,0,0,.04)');
-  ctx.fillStyle=pupilGrad;
-  ctx.beginPath();
-  ctx.arc(ex,ey,pupilR,0,Math.PI*2);
-  ctx.fill();
-  ctx.restore();
   ctx.strokeStyle='#111';ctx.lineWidth=8;ctx.beginPath();ctx.arc(ex,ey,pupilR,0,Math.PI*2);ctx.stroke();
   if(analysisDesignVisible){
     ctx.strokeStyle=opticColor;ctx.lineWidth=7;ctx.beginPath();ctx.arc(ex,ey,opticR,0,Math.PI*2);ctx.stroke();
