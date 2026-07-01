@@ -426,6 +426,111 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   .singleScene{height:170px}
 }
 
+
+/* === final fix: guide visible + retake aligned with title === */
+.singleFlowPanel{position:relative!important}
+.cameraSide{position:static!important}
+.singleFlowPanel.captured .panelHead{
+  position:relative!important;
+  padding-right:132px!important;
+}
+.cameraFrame.captured + .afterCaptureBar{
+  display:block!important;
+  position:absolute!important;
+  right:18px!important;
+  top:16px!important;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  z-index:50!important;
+}
+.imageRetryBtn{
+  width:auto!important;
+  min-width:98px!important;
+  height:38px!important;
+  padding:0 16px!important;
+  border-radius:10px!important;
+  background:var(--blue)!important;
+  color:#fff!important;
+  box-shadow:0 8px 18px rgba(0,94,184,.20)!important;
+}
+.imageRetryBtn::before{content:"↻ ";font-weight:950}
+.analysisLegendOverlay{
+  position:absolute!important;
+  left:12px!important;
+  right:12px!important;
+  top:12px!important;
+  z-index:24!important;
+  display:none;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:14px!important;
+  padding:8px 10px!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.88)!important;
+  border:1px solid rgba(220,230,242,.9)!important;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+.cameraFrame.captured .analysisLegendOverlay{display:flex!important}
+.analysisLegendOverlay div{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  font-size:12px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  color:#263e5a!important;
+  white-space:nowrap!important;
+}
+.singleFlowPanel.mode-current .analysisLegendOverlay div:last-child{color:var(--green)!important}
+.singleFlowPanel.mode-large .analysisLegendOverlay div:last-child{color:var(--orange)!important}
+.singleFlowPanel.mode-small .analysisLegendOverlay div:last-child{color:var(--red)!important}
+.legendCircle{
+  width:20px!important;
+  height:20px!important;
+  border-radius:50%!important;
+  display:inline-block!important;
+  flex:0 0 20px!important;
+}
+.irisLegend{border:2.5px dashed var(--blue)!important}
+.pupilLegend{border:2.5px solid #111!important}
+.opticLegend{border:2.5px solid var(--green)!important}
+.singleFlowPanel.mode-current .opticLegend{border-color:var(--green)!important}
+.singleFlowPanel.mode-large .opticLegend{border-color:var(--orange)!important}
+.singleFlowPanel.mode-small .opticLegend{border-color:var(--red)!important}
+.cameraFrame.captured #countOverlay{display:none!important}
+.cameraFrame.captured .guideText{display:none!important}
+@media(max-width:560px){
+  .singleFlowPanel.captured .panelHead{padding-right:110px!important}
+  .cameraFrame.captured + .afterCaptureBar{
+    right:14px!important;
+    top:14px!important;
+  }
+  .imageRetryBtn{
+    min-width:84px!important;
+    height:34px!important;
+    padding:0 12px!important;
+    font-size:13px!important;
+  }
+  .analysisLegendOverlay{
+    left:8px!important;
+    right:8px!important;
+    top:8px!important;
+    gap:7px!important;
+    padding:6px 7px!important;
+  }
+  .analysisLegendOverlay div{
+    font-size:10.5px!important;
+    gap:4px!important;
+  }
+  .legendCircle{
+    width:15px!important;
+    height:15px!important;
+    flex-basis:15px!important;
+  }
+}
+
 </style>
 </head>
 
@@ -692,7 +797,7 @@ async function startCamera(){
   camera=new Camera(video,{onFrame:async()=>{if(!captured&&faceMesh)await faceMesh.send({image:video})},width:1920,height:1080});camera.start()}catch(e){timerTitle.textContent='카메라 오류';timerText.textContent='카메라 권한을 허용한 뒤 다시 시도해주세요.';countNum.textContent='!'}
 }
 function stopCamera(){if(camera&&camera.stop)camera.stop();camera=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
-retryBtn.addEventListener('click',resetAll);document.querySelectorAll('.optionBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));document.querySelectorAll('.simCard').forEach(card=>card.addEventListener('click',()=>setMode(card.dataset.mode)));setMode('current');startCamera();
+retryBtn.addEventListener('click',()=>{ window.location.reload(); });document.querySelectorAll('.optionBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));document.querySelectorAll('.simCard').forEach(card=>card.addEventListener('click',()=>setMode(card.dataset.mode)));setMode('current');startCamera();
 </script>
 </body>
 </html>
