@@ -96,7 +96,9 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 .singleFlowPanel .cameraSide{padding:0 14px 14px}
 .singleFlowPanel .cameraFrame{aspect-ratio:1.45/1;max-height:390px}
 #analysisCanvas{position:absolute;inset:0;width:100%;height:100%;display:none;z-index:4}
+#analysisSnapshot{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;z-index:5}
 .cameraFrame.captured #analysisCanvas{display:block}
+.cameraFrame.captured #analysisSnapshot{display:block}
 .cameraFrame.captured #mainCanvas{display:block!important;position:absolute;inset:0;width:100%;height:100%;z-index:3}
 .cameraFrame.captured #camBadge,
 .cameraFrame.captured #countOverlay{display:none}
@@ -565,6 +567,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
         <video id="video" playsinline autoplay muted></video>
         <canvas id="mainCanvas"></canvas>
         <canvas id="analysisCanvas"></canvas>
+        <img id="analysisSnapshot" alt="동공 분석 캡처 이미지" />
         <canvas id="liveCanvas"></canvas>
 
         <div class="countOverlay" id="countOverlay">
@@ -651,7 +654,7 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 </main>
 
 <script>
-const video=document.getElementById('video'), cameraFrame=document.getElementById('cameraFrame'), liveCanvas=document.getElementById('liveCanvas'), mainCanvas=document.getElementById('mainCanvas'), analysisCanvas=document.getElementById('analysisCanvas');
+const video=document.getElementById('video'), cameraFrame=document.getElementById('cameraFrame'), liveCanvas=document.getElementById('liveCanvas'), mainCanvas=document.getElementById('mainCanvas'), analysisCanvas=document.getElementById('analysisCanvas'), analysisSnapshot=document.getElementById('analysisSnapshot');
 const timerTitle=document.getElementById('timerTitle'), timerText=document.getElementById('timerText'), countNum=document.getElementById('countNum'), ring=document.getElementById('ring'), retryBtn=document.getElementById('retryBtn'), guideText=document.getElementById('guideText');
 const step1=document.getElementById('step1'), step2=document.getElementById('step2'), step3=document.getElementById('step3');
 
@@ -746,7 +749,8 @@ function captureFace(){
   drawAnalysis();
   cameraFrame.classList.add('captured');
   flowPanel?.classList.add('captured','mode-current');
-  stopCamera();setStep(3);
+  // 화면을 먼저 완전히 고정한 뒤 카메라를 종료해야 PC Chrome/Android에서 캡처 이미지가 사라지지 않습니다.
+  setTimeout(()=>{ stopCamera(); }, 350);setStep(3);
 }
 function drawAnalysis(){
   if(!cropMeta || !eyeSourceCanvas)return;const{esx,esy,singleW,singleH,target,irisInfo}=cropMeta;analysisCanvas.width=1000;analysisCanvas.height=1000;const ctx=analysisCanvas.getContext('2d');
@@ -773,6 +777,11 @@ function drawAnalysis(){
     ctx.fillStyle=opticColor;[[ex,ey-opticR],[ex,ey+opticR],[ex-opticR,ey],[ex+opticR,ey]].forEach(p=>{ctx.beginPath();ctx.arc(p[0],p[1],8,0,Math.PI*2);ctx.fill()});
   }
   ctx.restore();
+  // PC/Android에서 카메라 스트림 종료 후 캔버스가 비어 보이는 현상을 방지하기 위해
+  // 최종 분석 화면을 이미지로 한 번 더 고정 저장합니다.
+  if(analysisSnapshot){
+    try{ analysisSnapshot.src=analysisCanvas.toDataURL('image/png'); }catch(e){}
+  }
 }
 function varColor(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function setMode(mode){
@@ -794,7 +803,7 @@ function setMode(mode){
   });
   drawAnalysis();
 }
-function resetAll(){captured=false;counting=false;analysisDesignVisible=false;eyeSourceCanvas=null;clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small','analysis-design-visible');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='카메라를 정면으로 바라봐 주세요.<small>양쪽 눈이 인식되면 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양쪽 눈이 인식되면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
+function resetAll(){captured=false;counting=false;analysisDesignVisible=false;eyeSourceCanvas=null;if(analysisSnapshot)analysisSnapshot.removeAttribute('src');clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small','analysis-design-visible');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='카메라를 정면으로 바라봐 주세요.<small>양쪽 눈이 인식되면 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양쪽 눈이 인식되면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
 async function startCamera(){
   try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});video.srcObject=stream;await video.play();
   faceMesh=new FaceMesh({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});faceMesh.onResults(onResults);
