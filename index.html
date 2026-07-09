@@ -664,7 +664,7 @@ const video=document.getElementById('video'), cameraFrame=document.getElementByI
 const timerTitle=document.getElementById('timerTitle'), timerText=document.getElementById('timerText'), countNum=document.getElementById('countNum'), ring=document.getElementById('ring'), retryBtn=document.getElementById('retryBtn'), guideText=document.getElementById('guideText');
 const step1=document.getElementById('step1'), step2=document.getElementById('step2'), step3=document.getElementById('step3');
 
-let stream=null, faceMesh=null, camera=null, counting=false, captured=false, countdownTimer=null, latestFace=null, selectedMode='current', analysisDesignVisible=false, cropMeta=null, eyeSourceCanvas=null;
+let stream=null, faceMesh=null, camera=null, counting=false, captured=false, countdownTimer=null, latestFace=null, selectedMode='current', analysisDesignVisible=false, cropMeta=null, eyeSourceCanvas=null, fullFrameCanvas=null;
 const FACE_OVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
 const LEFT_EYE=[33,133,159,145,160,144,158,153], RIGHT_EYE=[362,263,386,374,385,380,387,373];
 
@@ -699,6 +699,26 @@ function getApproxPupilRadiusFromIris(irisR){
   return irisR*.34;
 }
 
+function cloneFaceData(face){
+  // 카운트다운이 끝난 정확한 순간의 눈/홍채 좌표를 고정합니다.
+  // PC/Android는 0.5초만 지나도 다음 프레임 landmark로 crop이 밀릴 수 있어 깊은 복사로 잠급니다.
+  if(!face)return null;
+  try{return JSON.parse(JSON.stringify(face));}
+  catch(e){return face;}
+}
+
+function captureCurrentVideoFrame(){
+  // video 스트림이 멈추거나 다음 프레임으로 넘어가도 캡처 이미지는 유지되도록
+  // 촬영 순간의 원본 프레임을 별도 canvas에 먼저 복사합니다.
+  if(!video.videoWidth||!video.videoHeight)return null;
+  const frame=document.createElement('canvas');
+  frame.width=video.videoWidth;
+  frame.height=video.videoHeight;
+  const fctx=frame.getContext('2d',{willReadFrequently:true});
+  fctx.drawImage(video,0,0,frame.width,frame.height);
+  return frame;
+}
+
 function setStep(n){[step1,step2,step3].forEach((el,i)=>{if(el)el.classList.toggle('active',i+1<=n)})}
 function boxFrom(lm,ids,w,h){let xs=[],ys=[];ids.forEach(id=>{xs.push(lm[id].x*w);ys.push(lm[id].y*h)});return{x1:Math.min(...xs),x2:Math.max(...xs),y1:Math.min(...ys),y2:Math.max(...ys),cx:(Math.min(...xs)+Math.max(...xs))/2,cy:(Math.min(...ys)+Math.max(...ys))/2,width:Math.max(...xs)-Math.min(...xs),height:Math.max(...ys)-Math.min(...ys)}}
 function drawLive(lm){
@@ -720,17 +740,42 @@ function onResults(results){
   if(!counting){if(fill>=.66)startCountdown();else{timerTitle.textContent='촬영 준비 중';timerText.textContent=`조금 더 가까이 와주세요. 현재 약 ${Math.round(fill*100)}%`;countNum.textContent='-';ring.style.setProperty('--progress',`${Math.round(fill*260)}deg`)}}
 }
 function startCountdown(){
-  if(counting||captured)return;counting=true;let n=3;timerTitle.textContent='자동 촬영 중';timerText.textContent='양 눈이 잘 보입니다. 그대로 유지해주세요.';guideText.innerHTML='카메라를 정면으로 바라봐 주세요.<small>3초 후 자동으로 촬영됩니다.</small>';countNum.textContent=n;ring.style.setProperty('--progress','120deg');
-  countdownTimer=setInterval(()=>{n--;if(!latestFace){cancelCountdown();return}if(n<=0){clearInterval(countdownTimer);counting=false;setTimeout(captureFace,500)}else{countNum.textContent=n;ring.style.setProperty('--progress',`${(4-n)*120}deg`)}},1000);
+  if(counting||captured)return;
+  counting=true;
+  let n=3;
+  timerTitle.textContent='자동 촬영 중';
+  timerText.textContent='양 눈이 잘 보입니다. 그대로 유지해주세요.';
+  guideText.innerHTML='카메라를 정면으로 바라봐 주세요.<small>3초 후 자동으로 촬영됩니다.</small>';
+  countNum.textContent=n;
+  ring.style.setProperty('--progress','120deg');
+
+  countdownTimer=setInterval(()=>{
+    n--;
+    if(!latestFace){cancelCountdown();return}
+    if(n<=0){
+      clearInterval(countdownTimer);
+      counting=false;
+      const frozenFace=cloneFaceData(latestFace);
+      const frozenFrame=captureCurrentVideoFrame();
+      // 500ms 대기 없이 바로 캡처합니다. PC/Android에서 다음 프레임으로 밀리는 현상 방지.
+      captureFace(frozenFace,frozenFrame);
+    }else{
+      countNum.textContent=n;
+      ring.style.setProperty('--progress',`${(4-n)*120}deg`);
+    }
+  },1000);
 }
 function cancelCountdown(){clearInterval(countdownTimer);counting=false;countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양 눈이 보이도록 다시 맞춰주세요.';guideText.innerHTML='카메라를 정면으로 바라봐 주세요.<small>양쪽 눈이 인식되면 자동으로 촬영됩니다.</small>'}
-function captureFace(){
-  if(!latestFace||!video.videoWidth)return;captured=true;setStep(2);timerTitle.textContent='동공 분석 완료';timerText.textContent='한쪽 눈을 크게 확대해 내 눈 기준으로 분석했습니다.';countNum.textContent='✓';ring.style.setProperty('--progress','360deg');const flowPanel=document.querySelector('.singleFlowPanel');document.getElementById('capturePanelTitle').textContent='동공 분석 완료';guideText.style.display='none';
-  const w=video.videoWidth,h=video.videoHeight,left=latestFace.left,right=latestFace.right,cx=(left.cx+right.cx)/2,cy=(left.cy+right.cy)/2,cropW=Math.min(w,Math.max(latestFace.eyeDistance*2.8,520)),cropH=cropW*.58;
+function captureFace(frozenFace,frozenFrame){
+  const faceData=frozenFace||cloneFaceData(latestFace);
+  fullFrameCanvas=frozenFrame||captureCurrentVideoFrame();
+  if(!faceData||!fullFrameCanvas||!fullFrameCanvas.width)return;
+  captured=true;setStep(2);timerTitle.textContent='동공 분석 완료';timerText.textContent='한쪽 눈을 크게 확대해 내 눈 기준으로 분석했습니다.';countNum.textContent='✓';ring.style.setProperty('--progress','360deg');const flowPanel=document.querySelector('.singleFlowPanel');document.getElementById('capturePanelTitle').textContent='동공 분석 완료';guideText.style.display='none';
+  const w=fullFrameCanvas.width,h=fullFrameCanvas.height,left=faceData.left,right=faceData.right,cx=(left.cx+right.cx)/2,cy=(left.cy+right.cy)/2,cropW=Math.min(w,Math.max(faceData.eyeDistance*2.8,520)),cropH=cropW*.58;
   let sx=Math.max(0,cx-cropW/2),sy=Math.max(0,cy-cropH/2);if(sx+cropW>w)sx=w-cropW;if(sy+cropH>h)sy=h-cropH;sx=Math.max(0,sx);sy=Math.max(0,sy);
-  mainCanvas.width=1000;mainCanvas.height=580;const cctx=mainCanvas.getContext('2d');cctx.save();cctx.scale(-1,1);cctx.drawImage(video,sx,sy,cropW,cropH,-mainCanvas.width,0,mainCanvas.width,mainCanvas.height);cctx.restore();
+  mainCanvas.width=1000;mainCanvas.height=580;const cctx=mainCanvas.getContext('2d');cctx.save();cctx.scale(-1,1);cctx.drawImage(fullFrameCanvas,sx,sy,cropW,cropH,-mainCanvas.width,0,mainCanvas.width,mainCanvas.height);cctx.restore();
   const target=right;
-  const irisInfo=getIrisInfo(latestFace.lm,target,w,h);
+  const irisInfo=getIrisInfo(faceData.lm,target,w,h);
 
   // 약 9배 확대 느낌: 너무 과확대하면 화질이 깨져서 iris 반경 기준으로 안정적 crop
   const singleW=Math.max(irisInfo.r*3.25,110);
@@ -748,7 +793,7 @@ function captureFace(){
   ectx.save();
   ectx.scale(-1,1);
   ectx.filter='contrast(1.08) saturate(1.05)';
-  ectx.drawImage(video,esx,esy,singleW,singleH,-1000,0,1000,1000);
+  ectx.drawImage(fullFrameCanvas,esx,esy,singleW,singleH,-1000,0,1000,1000);
   ectx.restore();
 
   cropMeta={esx,esy,singleW,singleH,target,irisInfo};
@@ -811,7 +856,7 @@ function setMode(mode){
   });
   drawAnalysis();
 }
-function resetAll(){captured=false;counting=false;analysisDesignVisible=false;eyeSourceCanvas=null;if(analysisSnapshot)analysisSnapshot.removeAttribute('src');clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small','analysis-design-visible');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='카메라를 정면으로 바라봐 주세요.<small>양쪽 눈이 인식되면 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양쪽 눈이 인식되면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
+function resetAll(){captured=false;counting=false;analysisDesignVisible=false;eyeSourceCanvas=null;fullFrameCanvas=null;if(analysisSnapshot)analysisSnapshot.removeAttribute('src');clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small','analysis-design-visible');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='카메라를 정면으로 바라봐 주세요.<small>양쪽 눈이 인식되면 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양쪽 눈이 인식되면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
 async function startCamera(){
   try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});video.srcObject=stream;await video.play();
   faceMesh=new FaceMesh({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});faceMesh.onResults(onResults);
