@@ -541,6 +541,30 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 }
 
 
+
+
+/* 183 animation */
+.mf-animation-wrap{
+  width:calc(100% - 28px);
+  margin:0 14px 14px;
+  overflow:hidden;
+  border-radius:18px;
+  background:#11184f;
+}
+.mf-animation{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:cover;
+}
+@media(max-width:560px){
+  .mf-animation-wrap{
+    width:calc(100% - 24px);
+    margin:0 12px 14px;
+    border-radius:15px;
+  }
+}
+
 /* === PC/Android capture stability: keep final image layer fixed above camera === */
 .cameraFrame.captured #analysisCanvas{display:block!important;opacity:1!important;visibility:visible!important;z-index:5!important;background:#111}
 .cameraFrame.captured #analysisSnapshot[src]{display:block!important;opacity:1!important;visibility:visible!important;z-index:6!important}
@@ -653,7 +677,12 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
       </div>
     </div>
 
-    <div class="bottomImagePlaceholder" aria-label="183.jpg 이미지 영역"></div>
+    <div class="mf-animation-wrap">
+  <video class="mf-animation" autoplay muted loop playsinline preload="auto">
+    <source src="183_animation.webm" type="video/webm">
+    <source src="183_animation.mp4" type="video/mp4">
+  </video>
+</div>
 
     <div class="foot">해당 프로그램은 정확한 측정을 위한 프로그램이 아니며  동공과 광학부 설계 구조의 이해를 돕기 위한 프로그램입니다. 시야 체험 역시 이해를 돕기 위한 이미지로 개인에 따라 다를 수 있습니다.</div>
   </section>
