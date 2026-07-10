@@ -648,6 +648,80 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
   }
 }
 
+
+/* === 194: larger mobile header + clearer captured eye === */
+.topbar{
+  height:64px!important;
+  font-size:21px!important;
+  font-weight:950!important;
+  letter-spacing:-.045em!important;
+}
+@media(max-width:560px){
+  .topbar{
+    height:64px!important;
+    padding-left:24px!important;
+    font-size:19px!important;
+    justify-content:flex-start!important;
+  }
+}
+#analysisCanvas,
+#analysisSnapshot,
+#mainCanvas{
+  image-rendering:auto;
+}
+
+
+/* === 195: camera/vision title status-dot consistency === */
+.cameraRedDot,
+.panelTitle .dot{
+  width:14px!important;
+  height:14px!important;
+  flex:0 0 14px!important;
+  border-radius:50%!important;
+}
+
+/* 촬영 중: 빨간 원이 부드럽게 깜빡임 */
+.singleFlowPanel:not(.captured) .cameraRedDot{
+  background:#e53935!important;
+  animation:cameraStatusBlink 1s ease-in-out infinite;
+  box-shadow:0 0 0 0 rgba(229,57,53,.35);
+}
+
+/* 분석 완료: 같은 크기의 초록 원으로 변경, 깜빡임 정지 */
+.singleFlowPanel.captured .cameraRedDot{
+  background:var(--green)!important;
+  animation:none!important;
+  box-shadow:0 0 0 5px rgba(30,155,72,.12);
+}
+
+@keyframes cameraStatusBlink{
+  0%,100%{
+    opacity:1;
+    transform:scale(1);
+    box-shadow:0 0 0 0 rgba(229,57,53,.34);
+  }
+  50%{
+    opacity:.36;
+    transform:scale(.88);
+    box-shadow:0 0 0 7px rgba(229,57,53,0);
+  }
+}
+
+@media(max-width:560px){
+  .cameraRedDot,
+  .panelTitle .dot{
+    width:14px!important;
+    height:14px!important;
+    flex-basis:14px!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .singleFlowPanel:not(.captured) .cameraRedDot{
+    animation:none!important;
+  }
+}
+
 </style>
 </head>
 
@@ -986,7 +1060,7 @@ function captureFace(frozenFace,frozenFrame){
   const irisInfo=getIrisInfo(faceData.lm,target,w,h);
 
   // 약 9배 확대 느낌: 너무 과확대하면 화질이 깨져서 iris 반경 기준으로 안정적 crop
-  const singleW=Math.max(irisInfo.r*3.25,110);
+  const singleW=Math.max(irisInfo.r*4.8,180);
   const singleH=singleW;
   let esx=Math.max(0,irisInfo.x-singleW/2),esy=Math.max(0,irisInfo.y-singleH/2);
   if(esx+singleW>w)esx=w-singleW;
@@ -998,9 +1072,11 @@ function captureFace(frozenFace,frozenFrame){
   eyeSourceCanvas.width=1000;
   eyeSourceCanvas.height=1000;
   const ectx=eyeSourceCanvas.getContext('2d');
+  ectx.imageSmoothingEnabled=true;
+  ectx.imageSmoothingQuality='high';
   ectx.save();
   ectx.scale(-1,1);
-  ectx.filter='contrast(1.08) saturate(1.05)';
+  ectx.filter='contrast(1.04) saturate(1.03) brightness(1.01)';
   ectx.drawImage(fullFrameCanvas,esx,esy,singleW,singleH,-1000,0,1000,1000);
   ectx.restore();
 
@@ -1015,6 +1091,8 @@ function captureFace(frozenFace,frozenFrame){
 }
 function drawAnalysis(){
   if(!cropMeta || !eyeSourceCanvas)return;const{esx,esy,singleW,singleH,target,irisInfo}=cropMeta;analysisCanvas.width=1000;analysisCanvas.height=1000;const ctx=analysisCanvas.getContext('2d');
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
   ctx.clearRect(0,0,1000,1000);
   ctx.drawImage(eyeSourceCanvas,0,0,1000,1000);
 
@@ -1066,9 +1144,27 @@ function setMode(mode){
 }
 function resetAll(){captured=false;counting=false;analysisDesignVisible=false;eyeSourceCanvas=null;fullFrameCanvas=null;if(analysisSnapshot)analysisSnapshot.removeAttribute('src');clearInterval(countdownTimer);cameraFrame.classList.remove('captured');document.querySelector('.singleFlowPanel')?.classList.remove('captured','mode-current','mode-large','mode-small','analysis-design-visible');document.getElementById('capturePanelTitle').textContent='카메라 ON';guideText.style.display='block';guideText.innerHTML='카메라를 정면으로 바라봐 주세요.<small>양쪽 눈이 인식되면 자동으로 촬영됩니다.</small>';countNum.textContent='-';ring.style.setProperty('--progress','0deg');timerTitle.textContent='촬영 준비 중';timerText.textContent='양쪽 눈이 인식되면 3초 카운트다운이 시작됩니다.';setStep(1);startCamera()}
 async function startCamera(){
-  try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});video.srcObject=stream;await video.play();
+  try{if(stream)return;stream=await navigator.mediaDevices.getUserMedia({
+    video:{
+      facingMode:'user',
+      width:{ideal:2560,min:1280},
+      height:{ideal:1440,min:720},
+      frameRate:{ideal:30,min:20}
+    },
+    audio:false
+  });video.srcObject=stream;
+  try{
+    const track=stream.getVideoTracks()[0];
+    const caps=track&&track.getCapabilities?track.getCapabilities():{};
+    const advanced={};
+    if(caps.focusMode&&caps.focusMode.includes('continuous'))advanced.focusMode='continuous';
+    if(caps.exposureMode&&caps.exposureMode.includes('continuous'))advanced.exposureMode='continuous';
+    if(caps.whiteBalanceMode&&caps.whiteBalanceMode.includes('continuous'))advanced.whiteBalanceMode='continuous';
+    if(Object.keys(advanced).length)await track.applyConstraints({advanced:[advanced]});
+  }catch(e){}
+  await video.play();
   faceMesh=new FaceMesh({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:.55,minTrackingConfidence:.55});faceMesh.onResults(onResults);
-  camera=new Camera(video,{onFrame:async()=>{if(!captured&&faceMesh)await faceMesh.send({image:video})},width:1920,height:1080});camera.start()}catch(e){timerTitle.textContent='카메라 오류';timerText.textContent='카메라 권한을 허용한 뒤 다시 시도해주세요.';countNum.textContent='!'}
+  camera=new Camera(video,{onFrame:async()=>{if(!captured&&faceMesh)await faceMesh.send({image:video})},width:2560,height:1440});camera.start()}catch(e){timerTitle.textContent='카메라 오류';timerText.textContent='카메라 권한을 허용한 뒤 다시 시도해주세요.';countNum.textContent='!'}
 }
 function stopCamera(){if(camera&&camera.stop)camera.stop();camera=null;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}}
 retryBtn.addEventListener('click',()=>{ window.location.reload(); });document.querySelectorAll('.optionBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));document.querySelectorAll('.simCard').forEach(card=>card.addEventListener('click',()=>setMode(card.dataset.mode)));document.querySelectorAll('.simTabBtn').forEach(btn=>btn.addEventListener('click',()=>setMode(btn.dataset.mode)));startCamera();
