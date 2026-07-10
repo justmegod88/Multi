@@ -570,6 +570,57 @@ html,body{margin:0;background:linear-gradient(180deg,#f5f8fd 0%,#edf4fb 100%);co
 .cameraFrame.captured #analysisSnapshot[src]{display:block!important;opacity:1!important;visibility:visible!important;z-index:6!important}
 .cameraFrame.captured #video{display:block!important;opacity:0!important;pointer-events:none!important}
 
+
+
+/* === 191 refinements: tighter 183 video + focus rings === */
+.mf-animation-wrap{
+  aspect-ratio:720 / 1090;
+  min-height:0!important;
+}
+.mf-animation{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:top center!important;
+}
+
+/* Vision image focus ring: far blur = buildings / near blur = paper */
+.simCard.large .scene::before,
+.simCard.small .scene::before{
+  content:"";
+  position:absolute;
+  z-index:4;
+  pointer-events:none;
+  border-radius:50%;
+  opacity:1;
+  animation:focusPulse 1.8s ease-in-out infinite;
+}
+.simCard.large .scene::before{
+  width:30%;
+  aspect-ratio:1/1;
+  right:4%;
+  top:12%;
+  border:3px solid var(--orange);
+  box-shadow:0 0 0 7px rgba(255,152,0,.17),0 0 22px rgba(255,152,0,.42);
+}
+.simCard.small .scene::before{
+  width:42%;
+  aspect-ratio:1/1;
+  left:32%;
+  top:22%;
+  border:3px solid var(--red);
+  box-shadow:0 0 0 7px rgba(238,51,51,.16),0 0 22px rgba(238,51,51,.40);
+}
+@keyframes focusPulse{
+  0%,100%{transform:scale(.96);opacity:.78}
+  50%{transform:scale(1.04);opacity:1}
+}
+@media(max-width:560px){
+  .mf-animation-wrap{aspect-ratio:720 / 1080;}
+  .simCard.large .scene::before{width:31%;right:4%;top:13%;border-width:2.5px}
+  .simCard.small .scene::before{width:43%;left:31%;top:22%;border-width:2.5px}
+}
+
 </style>
 </head>
 
