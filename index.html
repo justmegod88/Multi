@@ -801,65 +801,107 @@ function getIrisInfo(lm,target,w,h){
 }
 
 function estimatePupilRadiusFromImage(canvas,cx,cy,irisR){
-  // 홍채 내부의 밝기 변화를 원형 방향으로 샘플링해 실제 동공 경계를 대략 추정합니다.
-  // 단순 고정 비율이 아니라 촬영된 검정동자 크기에 따라 검정 원과 광학부가 함께 달라집니다.
+  // 실제 촬영 이미지의 '가운데 가장 어두운 검정동자' 경계를 찾습니다.
+  // 중심부 밝기를 기준으로 여러 방향에서 어두운 영역이 끝나는 지점을 측정하고,
+  // 반사광/눈꺼풀 노이즈를 줄이기 위해 중앙값을 사용합니다.
   try{
     const ctx=canvas.getContext('2d',{willReadFrequently:true});
-    const image=ctx.getImageData(0,0,canvas.width,canvas.height);
-    const data=image.data,w=canvas.width,h=canvas.height;
-    const maxR=Math.min(irisR*.68,Math.min(cx,cy,w-cx,h-cy)-2);
-    const minR=Math.max(12,irisR*.16);
-    const steps=72,angles=96;
-    const profile=[];
+    const {width:w,height:h}=canvas;
+    const img=ctx.getImageData(0,0,w,h).data;
 
-    for(let s=0;s<steps;s++){
-      const r=minR+(maxR-minR)*(s/(steps-1));
-      const values=[];
-      for(let a=0;a<angles;a++){
-        const th=(Math.PI*2*a)/angles;
-        const x=Math.round(cx+Math.cos(th)*r);
-        const y=Math.round(cy+Math.sin(th)*r);
-        if(x<0||x>=w||y<0||y>=h)continue;
-        const idx=(y*w+x)*4;
-        const R=data[idx],G=data[idx+1],B=data[idx+2];
-        // 반사광의 영향을 줄이기 위해 밝은 픽셀은 뒤에서 절사합니다.
-        values.push(.2126*R+.7152*G+.0722*B);
-      }
-      values.sort((a,b)=>a-b);
-      const from=Math.floor(values.length*.12);
-      const to=Math.max(from+1,Math.floor(values.length*.72));
-      let sum=0;
-      for(let j=from;j<to;j++)sum+=values[j];
-      profile.push(sum/Math.max(1,to-from));
+    function grayAt(x,y){
+      x=Math.max(0,Math.min(w-1,Math.round(x)));
+      y=Math.max(0,Math.min(h-1,Math.round(y)));
+      const i=(y*w+x)*4;
+      const r=img[i],g=img[i+1],b=img[i+2];
+      return .2126*r+.7152*g+.0722*b;
     }
 
-    // 이동 평균으로 노이즈 완화
-    const smooth=profile.map((_,i)=>{
-      let sum=0,n=0;
-      for(let k=-2;k<=2;k++){
-        const j=i+k;
-        if(j>=0&&j<profile.length){sum+=profile[j];n++;}
-      }
-      return sum/n;
-    });
-
-    // 동공(어두움)에서 홍채(밝음)로 넘어가는 가장 강한 경계를 탐색
-    let bestIndex=Math.round(steps*.38),bestScore=-Infinity;
-    for(let i=4;i<steps-4;i++){
-      const before=(smooth[i-3]+smooth[i-2]+smooth[i-1])/3;
-      const after=(smooth[i+1]+smooth[i+2]+smooth[i+3])/3;
-      const gradient=after-before;
-      const rRatio=i/(steps-1);
-      // 너무 중심/바깥쪽 경계는 제외하고 일반적인 동공 범위를 우선
-      const rangeWeight=(rRatio>=.12&&rRatio<=.72)?1:.35;
-      const score=gradient*rangeWeight;
-      if(score>bestScore){bestScore=score;bestIndex=i;}
+    function median(values){
+      const a=values.filter(Number.isFinite).sort((a,b)=>a-b);
+      if(!a.length)return NaN;
+      const m=Math.floor(a.length/2);
+      return a.length%2?a[m]:(a[m-1]+a[m])/2;
     }
 
-    let radius=minR+(maxR-minR)*(bestIndex/(steps-1));
-    // 검출 실패 시에만 보수적 fallback
-    if(!Number.isFinite(radius)||bestScore<2.2)radius=irisR*.34;
-    return Math.max(irisR*.20,Math.min(irisR*.56,radius));
+    // 중심 반사광에 영향을 덜 받도록 아주 작은 중심 원의 하위 밝기값을 사용
+    const centerSamples=[];
+    const centerProbe=Math.max(8,irisR*.10);
+    for(let y=-centerProbe;y<=centerProbe;y+=2){
+      for(let x=-centerProbe;x<=centerProbe;x+=2){
+        if(x*x+y*y<=centerProbe*centerProbe){
+          centerSamples.push(grayAt(cx+x,cy+y));
+        }
+      }
+    }
+    centerSamples.sort((a,b)=>a-b);
+    const darkCenter=median(centerSamples.slice(0,Math.max(5,Math.floor(centerSamples.length*.45))));
+
+    // 홍채 바깥쪽의 기준 밝기
+    const irisSamples=[];
+    const irisProbeR=irisR*.72;
+    for(let a=0;a<96;a++){
+      const th=Math.PI*2*a/96;
+      irisSamples.push(grayAt(cx+Math.cos(th)*irisProbeR,cy+Math.sin(th)*irisProbeR));
+    }
+    const irisLevel=median(irisSamples);
+
+    // 동공과 홍채 사이의 적응형 임계값
+    // 지나치게 밝거나 어두운 환경에서도 가운데 검정 영역을 우선하도록 제한
+    let threshold=darkCenter+(irisLevel-darkCenter)*.43;
+    threshold=Math.max(darkCenter+8,Math.min(irisLevel-5,threshold));
+
+    const minR=Math.max(18,irisR*.14);
+    const maxR=Math.max(minR+10,irisR*.64);
+    const radii=[];
+    const angleCount=144;
+    const step=2;
+
+    for(let ai=0;ai<angleCount;ai++){
+      const th=Math.PI*2*ai/angleCount;
+      let runBright=0;
+      let boundary=maxR;
+
+      for(let r=minR;r<=maxR;r+=step){
+        // 단일 픽셀 대신 작은 수직 평균으로 반사광 노이즈 완화
+        const px=cx+Math.cos(th)*r;
+        const py=cy+Math.sin(th)*r;
+        const tangent=th+Math.PI/2;
+        const vals=[
+          grayAt(px,py),
+          grayAt(px+Math.cos(tangent)*2,py+Math.sin(tangent)*2),
+          grayAt(px-Math.cos(tangent)*2,py-Math.sin(tangent)*2)
+        ];
+        const v=median(vals);
+
+        if(v>threshold)runBright++;
+        else runBright=0;
+
+        // 3회 연속 밝아질 때를 검정동자 경계로 판단
+        if(runBright>=3){
+          boundary=r-step*2;
+          break;
+        }
+      }
+      radii.push(boundary);
+    }
+
+    radii.sort((a,b)=>a-b);
+
+    // 위·아래 눈꺼풀과 반사광 때문에 생기는 극단값 제거
+    const trimmed=radii.slice(
+      Math.floor(radii.length*.18),
+      Math.ceil(radii.length*.82)
+    );
+    let radius=median(trimmed);
+
+    // 검출 결과 안정화: 실제 동공 범위를 벗어날 때만 fallback
+    const minAllowed=irisR*.18;
+    const maxAllowed=irisR*.58;
+    if(!Number.isFinite(radius))radius=irisR*.34;
+    radius=Math.max(minAllowed,Math.min(maxAllowed,radius));
+
+    return radius;
   }catch(e){
     return irisR*.34;
   }
